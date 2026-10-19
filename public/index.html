@@ -62,7 +62,7 @@ a{color:inherit}
 nav{position:sticky;position:-webkit-sticky;top:0;z-index:20;background:rgba(30,15,54,.86);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid rgba(255,246,232,.08)}
 nav .wrap{display:flex;gap:6px;overflow-x:auto;padding-top:10px;padding-bottom:10px;scrollbar-width:none}
 nav .wrap::-webkit-scrollbar{display:none}
-nav a{flex:0 0 auto;text-decoration:none;font-weight:800;font-size:.9rem;padding:8px 12px;border-radius:999px;background:rgba(255,246,232,.07);transition:background .2s,transform .2s}
+nav a{flex:0 0 auto;text-decoration:none;font-weight:800;font-size:.88rem;padding:8px 10px;border-radius:999px;background:rgba(255,246,232,.07);transition:background .2s,transform .2s}
 nav a:hover,nav a:focus-visible{background:var(--orange);color:var(--night);transform:translateY(-1px)}
 
 /* ---------- Hero ---------- */
@@ -229,7 +229,7 @@ main,.hero .wrap,footer .wrap,.picado{position:relative;z-index:2}
 .nav-bar{flex-wrap:nowrap;align-items:center}
 .nav-links{display:flex;gap:6px}
 .nav-brand,.nav-toggle{display:none}
-@media (max-width:820px){
+@media (max-width:1080px){
   nav .wrap.nav-bar{overflow:visible;flex-wrap:wrap;justify-content:space-between;padding-top:8px;padding-bottom:8px}
   .nav-brand{display:inline-block;background:none!important;padding:8px 4px;font-family:"Grandstander",cursive;font-size:1.15rem;color:var(--marigold)}
   .nav-toggle{display:inline-flex;align-items:center;gap:8px;border:2px solid rgba(255,246,232,.8);background:rgba(255,246,232,.08);color:var(--cream);font:800 .95rem "Nunito",sans-serif;padding:8px 14px;border-radius:999px;cursor:pointer;-webkit-tap-highlight-color:transparent}
@@ -401,7 +401,22 @@ body.db-off [data-add]{opacity:.5;pointer-events:none}
 .help-wa{margin-top:18px;background:#e9f8ee;border-radius:16px;padding:16px;text-align:center}
 .help-wa p{margin:0 0 4px}
 body.help-lock{overflow:hidden}
-@media (min-width:821px){nav a[data-help-open]{display:none}}
+@media (min-width:1081px){nav a[data-help-open]{display:none}}
+
+/* ===== FAQ ===== */
+.faq-grid{display:grid;gap:10px;grid-template-columns:1fr;align-items:start}
+@media (min-width:900px){.faq-grid{grid-template-columns:1fr 1fr}}
+.faq{background:#fff;color:var(--card-ink);border-radius:18px;border:2px solid transparent;box-shadow:var(--shadow);transition:border-color .2s}
+.faq[open]{border-color:var(--orange)}
+.faq summary{cursor:pointer;list-style:none;padding:16px 18px;font-weight:900;font-size:1.02rem;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"＋";flex:0 0 28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--orange);color:var(--night);font-weight:900}
+.faq[open] summary::after{content:"－"}
+.faq-a{padding:0 18px 16px;color:var(--muted)}
+.faq-a p{margin:0 0 8px}.faq-a p:last-child{margin:0}
+.faq-a ul{margin:0;padding-left:20px}
+.faq-a b{color:var(--card-ink)}
+.faq-a a{color:var(--orange-deep);font-weight:800}
 /* gallery */
 .gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:16px}
 .ph{padding:0;border:0;border-radius:16px;overflow:hidden;aspect-ratio:1;cursor:zoom-in;background:var(--night-2);box-shadow:0 4px 0 rgba(0,0,0,.15)}
@@ -471,6 +486,7 @@ footer .heart{font-family:"Grandstander";font-size:1.6rem;color:var(--marigold);
       <a href="#comisiones">🙋 Comisiones</a>
       <a href="#normas">🏡 Normas</a>
       <a href="#llevar">🎒 Qué llevar</a>
+      <a href="#faq">💬 FAQ</a>
       <a href="#ayuda" data-help-open>❓ Ayuda</a>
     </div>
   </div>
@@ -839,6 +855,29 @@ footer .heart{font-family:"Grandstander";font-size:1.6rem;color:var(--marigold);
     </div>
   </section>
 
+  <!-- FAQ -->
+  <section id="faq" class="reveal">
+    <div class="sec-head">
+      <div class="ico" style="background:var(--pink);box-shadow:0 6px 0 #c93d7c">💬</div>
+      <div><h2>Preguntas frecuentes</h2><p>Toca una pregunta para ver la respuesta.</p></div>
+    </div>
+    <div class="faq-grid">
+      <details class="faq"><summary>🍬 ¿En qué consiste el «truco o trato»?</summary><div class="faq-a"><p>Es el momento central de la fiesta para los peques. Las familias que quieren preparan un <b>pequeño puesto</b> en el camino de entrada del cole que hace de «casita». Hacia las <b>19:15</b>, cuando los peques vuelven del paseo por el bosque, van de puesto en puesto diciendo <b>«¿truco o trato?»</b> y en cada uno reciben un <b>pequeño detalle</b>.</p><p>El detalle puede ser algo sano para comer (fruta, frutos secos, bizcocho casero…) o algo que no se come (pegatinas, una manualidad, una piedrita pintada…). Lo importante es que sea bonito y sin sustos.</p></div></details>
+      <details class="faq"><summary>🍎 ¿Qué se puede dar en el puesto?</summary><div class="faq-a"><ul><li><b>Nada de chuches ni azúcares refinados.</b></li><li>Si das comida, pon una <b>lista visible con todos los ingredientes</b>.</li><li>Revisa la sección de <a href="#alergias" data-faq-go>alergias e intolerancias</a> antes de prepararlo.</li></ul></div></details>
+      <details class="faq"><summary>🏠 ¿Tengo que montar un puesto?</summary><div class="faq-a"><p><b>No.</b> Es totalmente voluntario. Si te apetece, ¡genial! Puedes hacerlo solo o compartirlo con otra familia. Si no, ven a disfrutar igualmente.</p></div></details>
+      <details class="faq"><summary>🙋 ¿Tengo que apuntarme a una comisión?</summary><div class="faq-a"><p><b>No.</b> Se puede venir a la fiesta sin participar en la organización. Si tienes ganas, apúntate en <a href="#comisiones" data-faq-go>Comisiones</a>; también se puede echar una mano antes de la fiesta.</p></div></details>
+      <details class="faq"><summary>🌳 ¿Qué es el paseo por el bosque?</summary><div class="faq-a"><p>A las <b>18:30</b> las personas voluntarias de la comisión acompañan a los peques al bosque a preparar una <b>poción mágica</b> que «transforma» el cole. Mientras tanto, las familias montan los puestos para que, al volver, la magia ya esté hecha.</p></div></details>
+      <details class="faq"><summary>👨‍👩‍👧 ¿Quién puede venir?</summary><div class="faq-a"><p>Las <b>familias de Tierra que se apunten</b> en <a href="#asistentes" data-faq-go>«¿Quién viene?»</a>. Si excepcionalmente tienes visitas ese día, pueden venir bajo tu responsabilidad, acompañando a sus peques.</p></div></details>
+      <details class="faq"><summary>🧙 ¿Cómo vienen los peques?</summary><div class="faq-a"><p>Ya <b>disfrazados</b> desde casa. Esqueletos, calabazas y fantasmas, sí; <b>máscaras que asusten o sustos fuertes, no</b>: queremos un ambiente amable para los más pequeños.</p></div></details>
+      <details class="faq"><summary>🌭 ¿Cuánto cuesta el choripán y cómo lo pido?</summary><div class="faq-a"><p>🌭 Normal 2 € · 🌭🚫 Sin gluten 3 € · 🌱 Vegetariano 3 € · 🌱🚫 Vegetariano sin gluten 4 €. Pídelo en <a href="#cena" data-faq-go>Cena de choripán</a>. El pago se gestiona con la comisión de cena. Cada familia trae su bebida, platos, vasos, cubiertos y servilletas.</p></div></details>
+      <details class="faq"><summary>💡 ¿Hay luz en el cole?</summary><div class="faq-a"><p><b>No</b>, de noche está muy oscuro. Si haces puesto, trae iluminación (luces a pilas, linternas…). Y una linterna para moverse viene bien a todas.</p></div></details>
+      <details class="faq"><summary>🚗 ¿Dónde aparco?</summary><div class="faq-a"><p><b>No en la puerta del cole.</b> Deja el coche en la calle asfaltada sin bloquear accesos, y cuidemos el ruido al llegar y al salir.</p></div></details>
+      <details class="faq"><summary>🕙 ¿A qué hora termina?</summary><div class="faq-a"><p>La fiesta se va cerrando entre las <b>22:00 y las 22:30</b>. La comisión de recogida se queda hasta las 23:30 para dejar Tierra como estaba. Mira el <a href="#programa" data-faq-go>programa completo</a>.</p></div></details>
+      <details class="faq"><summary>✏️ Me he equivocado al apuntarme, ¿cómo lo cambio?</summary><div class="faq-a"><p>Toca tu nombre o tu pedido en la lista: se abre para cambiarlo o quitarlo. Tienes la explicación paso a paso en <a href="#ayuda" data-help-open>❓ Cómo funciona</a>.</p></div></details>
+    </div>
+    <p class="small" style="color:rgba(255,246,232,.75);margin-top:14px">¿No encuentras tu respuesta? <a href="https://chat.whatsapp.com/GKQaPcK6yhkLTN2VTvp2y5" target="_blank" rel="noopener" style="color:var(--marigold);font-weight:800">Pregunta en el grupo de WhatsApp 💬</a></p>
+  </section>
+
 </main>
 
 <footer>
@@ -937,6 +976,8 @@ footer .heart{font-family:"Grandstander";font-size:1.6rem;color:var(--marigold);
       <li>Las listas se actualizan solas: lo que apunten los demás aparece en unos segundos.</li>
     </ul>
   </details>
+
+  <p style="margin:6px 0 0"><a href="#faq" data-help-go style="color:var(--orange-deep);font-weight:900">💬 Ver las preguntas frecuentes →</a></p>
 
   <div class="help-wa">
     <p><b>¿Dudas o algo no funciona?</b> Pregunta en el grupo de WhatsApp de la fiesta 👇</p>
