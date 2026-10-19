@@ -6,7 +6,7 @@
 // Opcional: variable EDIT_CODE. Si existe, para modificar hay que conocer ese código
 // (una palabra que se comparte en el grupo de WhatsApp, para evitar spam de bots).
 
-const LISTS = ['asistentes', 'choripan', 'paseo', 'disco', 'cena', 'limpieza'];
+const LISTS = ['asistentes', 'choripan', 'paseo', 'disco', 'cena', 'limpieza', 'alergias'];
 const QTY = ['normal', 'normal_sg', 'veg', 'veg_sg'];
 const MAX_NAME = 160;
 const MAX_QTY = 40;
@@ -180,12 +180,13 @@ async function handleApi(request, env, url) {
     if (b.website) return json({ ok: true }); // trampa para bots
     const list = String(b.list || '');
     if (!LISTS.includes(list)) return bad('Lista desconocida.');
-    const name = cleanName(b.name);
+    let name = cleanName(b.name);
+    if (list === 'alergias') name = name.slice(0, 60).replace(/^./, c => c.toUpperCase());
     if (!name) return bad('Escribe un nombre.');
     if (list === 'choripan') { const c = await choriClosed(null); if (c) return bad(c, 423); }
     const q = Object.fromEntries(QTY.map(k => [k, list === 'choripan' ? cleanQty(b[k]) : 0]));
     const dup = await env.DB.prepare('SELECT id FROM entries WHERE list = ? AND lower(name) = lower(?)').bind(list, name).first();
-    if (dup) return bad('Ese nombre ya está en la lista. Puedes editarlo desde allí.', 409, { id: dup.id });
+    if (dup) return bad(list === 'alergias' ? 'Ese alérgeno ya está en la lista 👍' : 'Ese nombre ya está en la lista. Puedes editarlo desde allí.', 409, { id: dup.id });
     const r = await env.DB.prepare(
       "INSERT INTO entries (list, name, normal, normal_sg, veg, veg_sg) VALUES (?, ?, ?, ?, ?, ?) RETURNING *"
     ).bind(list, name, q.normal, q.normal_sg, q.veg, q.veg_sg).first();
@@ -200,7 +201,8 @@ async function handleApi(request, env, url) {
     if (!before) return bad('Esa entrada ya no existe (quizá alguien la ha quitado).', 404);
     const b = await readBody(request);
     if (!b) return bad('Datos no válidos.');
-    const name = b.name !== undefined ? cleanName(b.name) : before.name;
+    let name = b.name !== undefined ? cleanName(b.name) : before.name;
+    if (before.list === 'alergias') name = name.slice(0, 60).replace(/^./, c => c.toUpperCase());
     if (!name) return bad('Escribe un nombre.');
     const q = Object.fromEntries(QTY.map(k => [k, before.list === 'choripan' && b[k] !== undefined ? cleanQty(b[k]) : before[k]]));
     if (before.list === 'choripan') {

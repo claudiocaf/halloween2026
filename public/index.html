@@ -417,6 +417,10 @@ body.help-lock{overflow:hidden}
 .faq-a ul{margin:0;padding-left:20px}
 .faq-a b{color:var(--card-ink)}
 .faq-a a{color:var(--orange-deep);font-weight:800}
+.allergen{font:800 1rem "Nunito",sans-serif;cursor:pointer;transition:background .15s,border-color .15s}
+.allergen:hover,.allergen:focus-visible{background:#ffe1e1;border-color:#ff8080;outline:none}
+.allergy-add{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;margin-top:14px}
+.allergy-add .small{flex:1 1 240px;margin:0}
 /* gallery */
 .gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:16px}
 .ph{padding:0;border:0;border-radius:16px;overflow:hidden;aspect-ratio:1;cursor:zoom-in;background:var(--night-2);box-shadow:0 4px 0 rgba(0,0,0,.15)}
@@ -612,12 +616,16 @@ footer .heart{font-family:"Grandstander";font-size:1.6rem;color:var(--marigold);
       <div id="allergy-list" class="allergens"></div>
       <div id="allergy-empty" class="allergy-empty">
         <span class="big">⏳</span>
-        <p><b>Lista pendiente.</b> Estamos recogiendo las alergias e intolerancias de los peques. La publicaremos aquí y en el grupo de WhatsApp en cuanto esté lista.</p>
+        <p><b>Aún no hay ningún alérgeno apuntado.</b> Si tu peque tiene alguna alergia o intolerancia, añádela con el botón de abajo.</p>
+      </div>
+      <div class="allergy-add">
+        <button type="button" class="btn" data-add="alergias">＋ Añadir alergia o intolerancia</button>
+        <span class="small">Escribe <b>solo el ingrediente</b> (p. ej. «Frutos secos»), <b>sin nombres</b> de niños. Toca uno para corregirlo o quitarlo.</span>
       </div>
       <ul class="tick star" style="margin-top:16px">
         <li>Si repartes comida, pon una <b>lista visible con todos los ingredientes</b>.</li>
         <li>Si tienes dudas sobre un ingrediente, mejor no ofrecerlo o preguntar antes en el grupo.</li>
-        <li>Los alérgenos se publican sin nombres, para cuidar la privacidad de los peques.</li>
+        <li>Los alérgenos se publican <b>sin nombres</b>, para cuidar la privacidad de los peques. Si un ingrediente ya está en la lista, no hace falta repetirlo.</li>
       </ul>
     </div>
   </section>
@@ -991,17 +999,7 @@ footer .heart{font-family:"Grandstander";font-size:1.6rem;color:var(--marigold);
 
 <script>
 
-// Alergias e intolerancias: añade aquí cada alérgeno (sin nombres de niños). Ejemplo:
-// { icono: '🥜', nombre: 'Frutos secos' }, { icono: '🥛', nombre: 'Lactosa' }, { icono: '🌾', nombre: 'Gluten' }, { icono: '🥚', nombre: 'Huevo' }
-const ALERGIAS = [];
-(function(){
-  const list=document.getElementById('allergy-list'), empty=document.getElementById('allergy-empty');
-  if(!ALERGIAS.length) return;
-  empty.style.display='none';
-  ALERGIAS.forEach(a=>{const d=document.createElement('div');d.className='allergen';
-    const i=document.createElement('span');i.textContent=a.icono||'⚠️';
-    d.append(i,document.createTextNode(a.nombre));list.appendChild(d);});
-})();
+
 
 
 // Botón volver al inicio
@@ -1110,7 +1108,19 @@ const ALERGIAS = [];
   }
 
   // ---------- render ----------
-  function renderAll(){renderAsis();renderChori();renderCom();renderUpdated();maybeBanner();}
+  function renderAll(){renderAsis();renderChori();renderCom();renderAlerg();renderUpdated();maybeBanner();}
+  const ALG=[[/gluten|trigo|cebada|centeno|avena|celiac|celíac/i,'🌾'],[/lact|leche|láct|lact|queso|mantequilla|caseína|proteína de vaca|aplv/i,'🥛'],[/huevo/i,'🥚'],
+    [/cacahuete|man[ií]|frutos? secos?|nuez|nueces|almendra|avellana|anacardo|pistacho|piñ[oó]n/i,'🥜'],[/soja/i,'🫘'],[/pescado/i,'🐟'],[/marisco|crust|gamba|molusc/i,'🦐'],
+    [/s[eé]samo/i,'⚪'],[/fresa/i,'🍓'],[/kiwi/i,'🥝'],[/melocot|albaricoque|ciruela|cereza|rosácea/i,'🍑'],[/pl[aá]tano/i,'🍌'],[/tomate/i,'🍅'],[/legumbre|garbanzo|lenteja|guisante|altramuz/i,'🫛'],
+    [/mostaza/i,'🟡'],[/apio/i,'🥬'],[/sulfito/i,'🍷'],[/az[uú]car|fructosa|sacarosa/i,'🍬'],[/chocolate|cacao/i,'🍫'],[/colorante|aditivo/i,'🧪'],[/fruta/i,'🍎']];
+  const algIcon=n=>{const m=ALG.find(([r])=>r.test(n));return m?m[1]:'⚠️';};
+  function renderAlerg(){
+    const box=document.getElementById('allergy-list'),empty=document.getElementById('allergy-empty');if(!box)return;
+    const list=byList('alergias').slice().sort((a,b)=>a.name.localeCompare(b.name,'es'));
+    box.innerHTML='';empty.style.display=list.length?'none':'';
+    list.forEach(e=>{const c=el('button','allergen');c.type='button';c.title='Editar o quitar';c.append(el('span',null,algIcon(e.name)),document.createTextNode(e.name));
+      c.addEventListener('click',()=>openForm('alergias',e));box.append(c);});
+  }
   function renderUpdated(){
     const t=updatedAt?'Última actualización: '+fmt(toDate(updatedAt))+'.':'';
     document.querySelectorAll('[data-updated]').forEach(n=>n.textContent=t);
@@ -1177,12 +1187,13 @@ const ALERGIAS = [];
   function openForm(list,entry){
     if(list==='choripan'&&closedFor(entry)){toast(choriLocked?'🔒 Los pedidos de choripán están cerrados.':'🔒 Este pedido está bloqueado. Habla con la comisión de cena.');return;}
     const f=dlg.querySelector('form'); f.innerHTML=''; const isNew=!entry;
-    const titles={asistentes:isNew?'✅ Apuntar a mi familia':'✏️ Editar familia',choripan:isNew?'🌭 Pedir choripanes':'✏️ Cambiar pedido'};
+    const titles={asistentes:isNew?'✅ Apuntar a mi familia':'✏️ Editar familia',choripan:isNew?'🌭 Pedir choripanes':'✏️ Cambiar pedido',alergias:isNew?'⚠️ Añadir alergia o intolerancia':'✏️ Editar alergia'};
     f.append(el('h3',null,titles[list]||(isNew?'🙋 Apuntarme a ':'✏️ Editar · ')+(COMS[list]||'')));
-    const lab=el('label','fld'); lab.append(el('span',null,list==='asistentes'||list==='choripan'?'Nombres de la familia':'Tu nombre'));
+    const lab=el('label','fld'); lab.append(el('span',null,list==='alergias'?'Ingrediente o alérgeno':list==='asistentes'||list==='choripan'?'Nombres de la familia':'Tu nombre'));
     const inp=el('input'); inp.name='name'; inp.required=true; inp.maxLength=160; inp.autocomplete='off';
-    inp.placeholder=list==='asistentes'||list==='choripan'?'Ej.: Luna, Jesús y Dani':'Ej.: Marta'; const famList=list==='asistentes'||list==='choripan'; inp.value=entry?entry.name:(famList?(LS('h26-fam')||''):(LS('h26-me')||''));
+    inp.placeholder=list==='alergias'?'Ej.: Frutos secos':list==='asistentes'||list==='choripan'?'Ej.: Luna, Jesús y Dani':'Ej.: Marta'; const famList=list==='asistentes'||list==='choripan'; inp.value=entry?entry.name:(list==='alergias'?'':famList?(LS('h26-fam')||''):(LS('h26-me')||'')); if(list==='alergias')inp.maxLength=60;
     lab.append(inp); f.append(lab);
+    if(list==='alergias') f.append(el('p','paid-note','🔒 Escribe solo el ingrediente o alérgeno, sin nombres de niños ni de familias.'));
     const hp=el('input'); hp.name='website'; hp.tabIndex=-1; hp.autocomplete='off'; hp.className='hp'; hp.setAttribute('aria-hidden','true'); f.append(hp);
     let sum=null;
     if(list==='choripan'){
@@ -1207,7 +1218,7 @@ const ALERGIAS = [];
     const cancel=el('button','btn ghost','Cancelar'); cancel.type='button'; cancel.onclick=()=>dlg.close();
     act.append(save,cancel);
     if(!isNew&&!(list==='choripan'&&paidOf(entry))){
-      const del=el('button','btn danger',list==='asistentes'?'Quitar de la lista':list==='choripan'?'Quitar pedido':'Quitarme');del.type='button';
+      const del=el('button','btn danger',list==='asistentes'?'Quitar de la lista':list==='choripan'?'Quitar pedido':list==='alergias'?'Quitar':'Quitarme');del.type='button';
       let armed=false; const delTxt=del.textContent; del.onclick=async()=>{
         if(!armed){armed=true;del.textContent='¿Seguro? Toca otra vez';setTimeout(()=>{armed=false;del.textContent=delTxt;},4000);return;}
         try{busy(true);await call('DELETE','/entries/'+entry.id);mine.delete(entry.id);saveMine();dlg.close();toast('Quitado de la lista.');await load();}catch(e){err.textContent=e.message;}finally{busy(false);}
@@ -1225,9 +1236,9 @@ const ALERGIAS = [];
         busy(true);
         const d=isNew?await call('POST','/entries',body):await call('PATCH','/entries/'+entry.id,body);
         mine.add(d.entry.id); saveMine();
-        if(list==='asistentes'||list==='choripan') LS('h26-fam',d.entry.name); else LS('h26-me',d.entry.name);
+        if(list==='asistentes'||list==='choripan') LS('h26-fam',d.entry.name); else if(list!=='alergias') LS('h26-me',d.entry.name);
         if(list==='asistentes'){LS('h26-asis','yes');hideBanner();}
-        dlg.close(); toast(isNew?'¡Apuntado! 🎃':'Cambios guardados ✓'); await load();
+        dlg.close(); toast(isNew?(list==='alergias'?'Añadido a la lista ✓':'¡Apuntado! 🎃'):'Cambios guardados ✓'); await load();
       }catch(e){err.textContent=e.message;}finally{busy(false);}
     };
     dlg.showModal(); setTimeout(()=>inp.focus(),50);

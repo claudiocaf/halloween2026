@@ -63,7 +63,9 @@ td.n{text-align:center;white-space:nowrap}
 .pill.q{background:#fff3cd;color:#8a5a00}
 .tip{position:relative;cursor:help;outline:none;display:inline-block}
 .tip .tt{display:none;position:absolute;z-index:5;left:50%;top:calc(100% + 6px);transform:translateX(-50%);background:var(--ink);color:#fff;font-size:.82rem;font-weight:600;line-height:1.35;padding:8px 10px;border-radius:10px;width:max-content;max-width:260px;text-align:left;white-space:normal;box-shadow:0 6px 18px rgba(0,0,0,.25)}
-.tip:hover .tt,.tip:focus .tt{display:block}
+.tip .tt{display:none!important}
+#ftip{position:fixed;z-index:100;background:var(--ink);color:#fff;font-size:.82rem;font-weight:600;line-height:1.35;padding:8px 10px;border-radius:10px;max-width:260px;box-shadow:0 6px 18px rgba(0,0,0,.3);pointer-events:none;opacity:0;transition:opacity .12s}
+#ftip.on{opacity:1}
 .warnrow td{background:#fffaf0}
 .wlist{list-style:none;padding:0;margin:0;display:grid;gap:6px}
 .wlist li{background:#fff3cd;color:#5c4100;border-radius:10px;padding:8px 12px;font-size:.92rem}
@@ -123,7 +125,7 @@ td.n{text-align:center;white-space:nowrap}
 <script>
 (function(){
   const LS=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v);}catch(e){return null;}};
-  const LISTS={asistentes:'✅ Asistentes',choripan:'🌭 Choripán',paseo:'🌳 Paseo',disco:'🪩 Disco',cena:'🍽️ Cena',limpieza:'🧹 Limpieza'};
+  const LISTS={asistentes:'✅ Asistentes',choripan:'🌭 Choripán',paseo:'🌳 Paseo',disco:'🪩 Disco',cena:'🍽️ Cena',limpieza:'🧹 Limpieza',alergias:'⚠️ Alergias'};
   const TYPES=[['normal','🌭',2],['normal_sg','🌭🚫',3],['veg','🌱',3],['veg_sg','🌱🚫',4]];
   const VERB={add:'añadió',edit:'cambió',delete:'quitó',restore:'recuperó',pay:'💶 marcó pagado',unpay:'anuló el pago de',lock:'🔒 bloqueó',unlock:'🔓 desbloqueó',lock_all:'🔒',unlock_all:'🔓'};
   let entries=[], tab='asistentes';
@@ -290,6 +292,21 @@ td.n{text-align:center;white-space:nowrap}
     if(to&&!confirm('¿Cerrar los pedidos de choripán? Nadie podrá añadir ni cambiar pedidos desde la web.'))return;
     try{await api('/admin/chori-lock',{method:'POST',body:JSON.stringify({locked:to})});await load();}catch(e){alert(e.message);}
   };
+
+  // Tooltip flotante: siempre visible aunque la fila esté al final de la tabla
+  const ftip=document.createElement('div');ftip.id='ftip';ftip.setAttribute('role','tooltip');document.body.appendChild(ftip);
+  let tipFor=null;
+  function showTip(t){const src=t.querySelector('.tt');if(!src)return;tipFor=t;ftip.innerHTML=src.innerHTML;ftip.classList.add('on');
+    const r=t.getBoundingClientRect(),w=ftip.offsetWidth,h=ftip.offsetHeight,m=8;
+    let x=r.left+r.width/2-w/2;x=Math.max(m,Math.min(x,window.innerWidth-w-m));
+    let y=r.bottom+6;if(y+h>window.innerHeight-m)y=r.top-h-6;if(y<m)y=m;
+    ftip.style.left=x+'px';ftip.style.top=y+'px';}
+  function hideTip(){tipFor=null;ftip.classList.remove('on');}
+  document.addEventListener('mouseover',e=>{const t=e.target.closest('.tip');if(t&&t!==tipFor)showTip(t);else if(!t&&tipFor)hideTip();});
+  document.addEventListener('focusin',e=>{const t=e.target.closest('.tip');if(t)showTip(t);});
+  document.addEventListener('focusout',e=>{if(e.target.closest('.tip'))hideTip();});
+  document.addEventListener('click',e=>{const t=e.target.closest('.tip');if(t){tipFor===t?hideTip():showTip(t);}else hideTip();});
+  window.addEventListener('scroll',hideTip,true);
   async function loadLog(){
     const ul=document.getElementById('log');
     const d=await api('/log?limit=200');ul.innerHTML='';
