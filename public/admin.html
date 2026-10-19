@@ -37,6 +37,18 @@ td.n{text-align:center;white-space:nowrap}
 .muted{color:var(--muted)}
 .err{background:#ffe1e1;color:#8a1c1c;font-weight:800;padding:10px 14px;border-radius:12px;margin-bottom:14px}
 .scroll{overflow-x:auto}
+html{scroll-behavior:smooth}
+.card{scroll-margin-top:70px}
+.qnav{position:sticky;top:0;z-index:20;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 -16px 16px;padding:10px 16px;background:rgba(30,15,54,.92);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-bottom:1px solid rgba(255,246,232,.08)}
+.qnav::-webkit-scrollbar{display:none}
+.qnav a{flex:0 0 auto;text-decoration:none;color:var(--cream);font-weight:800;font-size:.9rem;padding:8px 14px;border-radius:999px;background:rgba(255,246,232,.08);transition:background .15s}
+.qnav a:hover,.qnav a:focus-visible,.qnav a.on{background:var(--orange);color:var(--night);outline:none}
+.qb{display:inline-block;min-width:20px;padding:0 6px;border-radius:999px;background:#ff4d4d;color:#fff;font-size:.75rem;text-align:center;margin-left:2px}
+.qb:empty{display:none}
+.to-top{position:fixed;right:16px;bottom:18px;z-index:30;width:54px;height:54px;border-radius:50%;display:grid;place-items:center;text-decoration:none;background:rgba(30,15,54,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:3px solid rgba(255,246,232,.85);opacity:0;transform:translateY(20px);pointer-events:none;transition:opacity .25s,transform .25s}
+.to-top.show{opacity:1;transform:none;pointer-events:auto}
+.to-top:hover svg{transform:translateY(-3px)}.to-top svg{transition:transform .2s}
+
 .paybar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:12px}
 .lockbtn{border:0;border-radius:999px;padding:10px 16px;font-weight:900;cursor:pointer;font-size:.95rem}
 .lockbtn.open{background:#e9f8ee;color:#1f5a33;border:2px solid #9fd9b2}
@@ -74,7 +86,8 @@ td.n{text-align:center;white-space:nowrap}
 
 </style>
 </head>
-<body>
+<body id="top">
+<a href="#top" class="to-top" id="toTop" aria-label="Volver arriba"><svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d="M12 19V6M6 11.5L12 5.5l6 6" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
 <div class="wrap">
   <h1>🎃 Admin · Halloween 2026</h1>
   <p class="sub">Historial de cambios, listas completas y descarga. Esta página no aparece en el menú de la web.</p>
@@ -85,6 +98,14 @@ td.n{text-align:center;white-space:nowrap}
     <a class="btn ghost" href="/">← Volver a la web</a>
   </div>
   <div class="cards" id="kpis"></div>
+
+  <nav class="qnav" id="qnav" aria-label="Secciones">
+    <a href="#paycard">💶 Pagos</a>
+    <a href="#familias">👥 Familias</a>
+    <a href="#avisos">🔍 Avisos <span class="qb" id="qb-warn"></span></a>
+    <a href="#listas">📋 Listas</a>
+    <a href="#cambios">🕓 Cambios</a>
+  </nav>
 
   <div class="card" id="paycard">
     <h2>💶 Pedidos y pagos de choripán</h2>
@@ -98,25 +119,25 @@ td.n{text-align:center;white-space:nowrap}
     <p class="muted" style="margin-bottom:0;font-size:.85rem">«Marcar pagado» guarda lo que la familia ha pagado. Si después añade choripanes, pasa a <b>parcial</b> y verás cuánto falta. Lo pagado no se puede quitar desde la web (sí con «Anular pago»).</p>
   </div>
 
-  <div class="card">
+  <div class="card" id="familias">
     <h2>👥 Resumen por familia</h2>
     <p class="muted" style="margin-top:0">Cruza todas las listas comparando nombres. Es automático: revisa las marcas <span class="pill q">?</span> (el nombre encaja en varias familias).</p>
     <div class="fam-tools" id="famf"></div>
     <div class="scroll"><table id="fam"></table></div>
   </div>
 
-  <div class="card">
+  <div class="card" id="avisos">
     <h2>🔍 Posibles duplicados y avisos</h2>
     <ul class="wlist" id="warn"><li class="info">Cargando…</li></ul>
   </div>
 
-  <div class="card">
+  <div class="card" id="listas">
     <h2>📋 Listas</h2>
     <div class="tabs" id="tabs"></div>
     <div class="scroll"><table id="tbl"></table></div>
   </div>
 
-  <div class="card">
+  <div class="card" id="cambios">
     <h2>🕓 Últimos cambios</h2>
     <p class="muted" style="margin-top:0">Los borrados se pueden recuperar con «↩︎ Deshacer».</p>
     <ul class="log" id="log"><li class="muted">Cargando…</li></ul>
@@ -246,6 +267,7 @@ td.n{text-align:center;white-space:nowrap}
       COMK.forEach(k=>{const td=el('td');f.com[k].forEach(x=>{const p=el('span','pill'+(x.q?' q':''),x.name+(x.q?' ?':''));if(x.q)p.title='Encaja en varias familias: '+x.cands.join(' / ');td.append(p);});r.append(td);});
       t.append(r);
     });
+    const nw=warns.filter(w=>w[0]==='warn').length;document.getElementById('qb-warn').textContent=nw||'';
     const wl=document.getElementById('warn');wl.innerHTML='';
     warns.forEach(([c,txt])=>wl.append(el('li',c==='info'?'info':null,txt)));
     if(!warns.length)wl.append(el('li','info','No se han detectado duplicados 🎉'));
@@ -307,6 +329,14 @@ td.n{text-align:center;white-space:nowrap}
   document.addEventListener('focusout',e=>{if(e.target.closest('.tip'))hideTip();});
   document.addEventListener('click',e=>{const t=e.target.closest('.tip');if(t){tipFor===t?hideTip():showTip(t);}else hideTip();});
   window.addEventListener('scroll',hideTip,true);
+
+  // Botón subir y sección activa en el menú rápido
+  const tt=document.getElementById('toTop');
+  const onScroll=()=>{tt.classList.toggle('show',window.scrollY>500);
+    let cur=null;document.querySelectorAll('.qnav a').forEach(a=>{const t=document.querySelector(a.getAttribute('href'));if(t&&t.getBoundingClientRect().top<120)cur=a;});
+    document.querySelectorAll('.qnav a').forEach(a=>a.classList.toggle('on',a===cur));
+    const q=document.getElementById('qnav');if(cur&&cur!==q._cur){q._cur=cur;q.scrollTo({left:cur.offsetLeft-q.clientWidth/2+cur.offsetWidth/2,behavior:'smooth'});}};
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
   async function loadLog(){
     const ul=document.getElementById('log');
     const d=await api('/log?limit=200');ul.innerHTML='';
@@ -336,5 +366,6 @@ td.n{text-align:center;white-space:nowrap}
   load();
 })();
 </script>
+
 </body>
 </html>
