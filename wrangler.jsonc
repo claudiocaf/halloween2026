@@ -12,7 +12,7 @@
     {
       "binding": "DB",
       "database_name": "halloween2026",
-      "database_id": "PEGA-AQUI-EL-DATABASE-ID"
+      "database_id": "8e48250a-4562-4a1b-8738-12db4db96f4c"
     }
   ],
   // Mantiene las variables/secretos que pongas en el panel (ADMIN_KEY, EDIT_CODE)
