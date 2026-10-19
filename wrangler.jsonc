@@ -1,0 +1,20 @@
+{
+  // Worker de la fiesta: sirve la web (carpeta public) y la API (/api/...)
+  "name": "halloween2026",
+  "main": "src/worker.js",
+  "compatibility_date": "2025-09-01",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "halloween2026",
+      "database_id": "8e48250a-4562-4a1b-8738-12db4db96f4c"
+    }
+  ],
+  // Mantiene las variables/secretos que pongas en el panel (ADMIN_KEY, EDIT_CODE)
+  "keep_vars": true
+}

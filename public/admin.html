@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Admin · Halloween 2026</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎃</text></svg>">
+<style>
+:root{--night:#1e0f36;--night-2:#2a1446;--cream:#fff6e8;--ink:#2b1a3f;--muted:#6b5a80;--orange:#ff8a1f;--orange-deep:#e8650a;--marigold:#ffc233;--line:rgba(43,26,63,.12)}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--night);color:var(--cream);line-height:1.5}
+.wrap{max-width:1000px;margin:0 auto;padding:24px 16px 60px}
+h1{margin:0 0 4px;font-size:clamp(1.5rem,5vw,2.1rem)}
+.sub{margin:0 0 20px;color:rgba(255,246,232,.7)}
+.bar{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:18px}
+.btn{display:inline-flex;align-items:center;gap:6px;border:0;border-radius:999px;padding:10px 16px;font-weight:800;font-size:.95rem;cursor:pointer;background:var(--orange);color:var(--night);text-decoration:none}
+.btn.ghost{background:transparent;color:var(--cream);border:2px solid rgba(255,246,232,.6)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:18px}
+.k{background:var(--night-2);border-radius:16px;padding:12px 14px}
+.k b{display:block;font-size:1.8rem;color:var(--marigold);line-height:1.1}
+.k span{font-size:.85rem;color:rgba(255,246,232,.75)}
+.card{background:#fff;color:var(--ink);border-radius:20px;padding:18px;margin-bottom:16px}
+.card h2{margin:0 0 10px;font-size:1.2rem}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.tabs button{border:2px solid var(--line);background:#f7f2ff;color:var(--ink);border-radius:999px;padding:6px 12px;font-weight:800;cursor:pointer}
+.tabs button.on{background:var(--orange);border-color:var(--orange);color:var(--night)}
+table{width:100%;border-collapse:collapse;font-size:.92rem}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+td.n{text-align:center;white-space:nowrap}
+.log{list-style:none;padding:0;margin:0;display:grid;gap:6px}
+.log li{background:#f7f2ff;border-radius:10px;padding:8px 12px;font-size:.92rem}
+.t{color:var(--muted);font-size:.82rem}
+.a-add{color:#1f7a3a;font-weight:800}.a-edit{color:#8a5a00;font-weight:800}.a-delete{color:#b3261e;font-weight:800}.a-restore{color:#2d6fb3;font-weight:800}
+.undo{margin-left:8px;border:0;background:var(--orange);color:var(--night);font-weight:800;font-size:.8rem;border-radius:999px;padding:3px 10px;cursor:pointer}
+.muted{color:var(--muted)}
+.err{background:#ffe1e1;color:#8a1c1c;font-weight:800;padding:10px 14px;border-radius:12px;margin-bottom:14px}
+.scroll{overflow-x:auto}
+.fam-tools{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;align-items:center}
+.fam-tools input{flex:1 1 180px;min-width:0;padding:8px 12px;border-radius:999px;border:2px solid var(--line);font:600 .95rem system-ui,sans-serif}
+#fam td,#fam th{white-space:normal}
+#fam td.c{text-align:center}
+.yes{color:#1f7a3a;font-weight:900}.no{color:#c9c2d6}
+.pill{display:inline-block;background:#f7f2ff;border-radius:999px;padding:1px 8px;margin:1px 2px;font-size:.85rem;white-space:nowrap}
+.pill.q{background:#fff3cd;color:#8a5a00}
+.tip{position:relative;cursor:help;outline:none;display:inline-block}
+.tip .tt{display:none;position:absolute;z-index:5;left:50%;top:calc(100% + 6px);transform:translateX(-50%);background:var(--ink);color:#fff;font-size:.82rem;font-weight:600;line-height:1.35;padding:8px 10px;border-radius:10px;width:max-content;max-width:260px;text-align:left;white-space:normal;box-shadow:0 6px 18px rgba(0,0,0,.25)}
+.tip:hover .tt,.tip:focus .tt{display:block}
+.warnrow td{background:#fffaf0}
+.wlist{list-style:none;padding:0;margin:0;display:grid;gap:6px}
+.wlist li{background:#fff3cd;color:#5c4100;border-radius:10px;padding:8px 12px;font-size:.92rem}
+.wlist li.info{background:#eef5ff;color:#1d3f66}
+.fam-name small{display:block;color:var(--muted);font-size:.78rem}
+
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🎃 Admin · Halloween 2026</h1>
+  <p class="sub">Historial de cambios, listas completas y descarga. Esta página no aparece en el menú de la web.</p>
+  <div id="err" class="err" hidden></div>
+  <div class="bar">
+    <a class="btn" id="csv" href="/api/export.csv">⬇️ Descargar todo (Excel / CSV)</a>
+    <button class="btn ghost" id="reload" type="button">↻ Actualizar</button>
+    <a class="btn ghost" href="/">← Volver a la web</a>
+  </div>
+  <div class="cards" id="kpis"></div>
+
+  <div class="card">
+    <h2>👥 Resumen por familia</h2>
+    <p class="muted" style="margin-top:0">Cruza todas las listas comparando nombres. Es automático: revisa las marcas <span class="pill q">?</span> (el nombre encaja en varias familias).</p>
+    <div class="fam-tools" id="famf"></div>
+    <div class="scroll"><table id="fam"></table></div>
+  </div>
+
+  <div class="card">
+    <h2>🔍 Posibles duplicados y avisos</h2>
+    <ul class="wlist" id="warn"><li class="info">Cargando…</li></ul>
+  </div>
+
+  <div class="card">
+    <h2>📋 Listas</h2>
+    <div class="tabs" id="tabs"></div>
+    <div class="scroll"><table id="tbl"></table></div>
+  </div>
+
+  <div class="card">
+    <h2>🕓 Últimos cambios</h2>
+    <p class="muted" style="margin-top:0">Los borrados se pueden recuperar con «↩︎ Deshacer».</p>
+    <ul class="log" id="log"><li class="muted">Cargando…</li></ul>
+  </div>
+</div>
+<script>
+(function(){
+  const LS=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v);}catch(e){return null;}};
+  const LISTS={asistentes:'✅ Asistentes',choripan:'🌭 Choripán',paseo:'🌳 Paseo',disco:'🪩 Disco',cena:'🍽️ Cena',limpieza:'🧹 Limpieza'};
+  const TYPES=[['normal','🌭',2],['normal_sg','🌭🚫',3],['veg','🌱',3],['veg_sg','🌱🚫',4]];
+  const VERB={add:'añadió',edit:'cambió',delete:'quitó',restore:'recuperó'};
+  let entries=[], tab='asistentes';
+  const el=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e;};
+  const fmt=s=>s?new Date(s.replace(' ','T')+'Z').toLocaleString('es-ES',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',timeZone:'Europe/Madrid'}):'';
+  const key=()=>LS('h26-admin')||'';
+  const hdr=()=>{const h={'content-type':'application/json'};if(key())h['x-admin-key']=key();const c=LS('h26-code');if(c)h['x-edit-code']=c;return h;};
+  function showErr(t){const e=document.getElementById('err');e.textContent=t;e.hidden=!t;}
+  async function api(path,opt={}){
+    const r=await fetch('/api'+path,{cache:'no-store',...opt,headers:hdr()});
+    let d={};try{d=await r.json();}catch(e){}
+    if(r.status===403&&d.need_admin){const k=prompt('Clave de administración:');if(k){LS('h26-admin',k.trim());return api(path,opt);}throw new Error('Hace falta la clave de administración.');}
+    if(!r.ok)throw new Error(d.error||'Error');
+    return d;
+  }
+  function kpis(){
+    const by=l=>entries.filter(e=>e.list===l), box=document.getElementById('kpis'); box.innerHTML='';
+    const ch=by('choripan'), tot=TYPES.map(([k])=>ch.reduce((s,e)=>s+e[k],0));
+    const eur=TYPES.reduce((s,[,,p],i)=>s+tot[i]*p,0);
+    [[by("asistentes").length,'familias asistentes'],[tot.reduce((a,b)=>a+b,0),'choripanes ('+TYPES.map(([,ic],i)=>ic+' '+tot[i]).join(' · ')+')'],[eur+' €','total choripán'],
+     [ch.filter(e=>!(e.normal+e.normal_sg+e.veg+e.veg_sg)).length,'pedidos sin cantidad'],
+     [['paseo','disco','cena','limpieza'].map(k=>by(k).length).join(' / '),'paseo / disco / cena / limpieza']].forEach(([n,t])=>{
+      const k=el('div','k');k.append(el('b',null,String(n)),el('span',null,t));box.append(k);});
+  }
+  function tabs(){
+    const b=document.getElementById('tabs');b.innerHTML='';
+    Object.entries(LISTS).forEach(([k,v])=>{const x=el('button',k===tab?'on':'',v+' ('+entries.filter(e=>e.list===k).length+')');x.type='button';x.onclick=()=>{tab=k;tabs();table();};b.append(x);});
+  }
+  function table(){
+    const t=document.getElementById('tbl');t.innerHTML='';const rows=entries.filter(e=>e.list===tab);
+    const head=el('tr');head.append(el('th',null,'#'),el('th',null,'Nombre'));
+    if(tab==='choripan')TYPES.forEach(([,ic])=>head.append(el('th','n',ic)));
+    head.append(el('th',null,'Actualizado'));t.append(head);
+    rows.forEach((e,i)=>{const r=el('tr');r.append(el('td','muted',String(i+1)),el('td',null,e.name));
+      if(tab==='choripan')TYPES.forEach(([k])=>r.append(el('td','n',e[k]?String(e[k]):'·')));
+      r.append(el('td','t',fmt(e.updated_at)));t.append(r);});
+    if(!rows.length){const r=el('tr'),c=el('td','muted','Vacía');c.colSpan=7;r.append(c);t.append(r);}
+  }
+
+  // ===== Cruce de listas y duplicados =====
+  const norm=s=>s.normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[.()]/g,' ').replace(/\s+/g,' ').trim();
+  const tokens=s=>s.split(/\s*[,;/&+]\s*|\s+(?:y|i|e)\s+/i).map(norm).filter(t=>t&&!/^(y )?familia$/.test(t));
+  function same(a,b){if(a===b)return true;const fa=a.split(' ')[0],fb=b.split(' ')[0];
+    if((!a.includes(' ')&&a===fb)||(!b.includes(' ')&&b===fa))return true;
+    const dd=x=>x.replace(/(.)\1+/g,'$1');
+    return fa.length>=4&&dd(fa)===dd(fb)&&(!a.includes(' ')||!b.includes(' ')||a.split(' ')[1][0]===b.split(' ')[1][0]);}
+  function overlap(A,B){const used=new Set();let m=0;A.forEach(a=>{const j=B.findIndex((b,i)=>!used.has(i)&&same(a,b));if(j>=0){used.add(j);m++;}});return m;}
+  const isFamMatch=(A,B)=>{const m=overlap(A,B);return m>=2||(m>=1&&Math.min(A.length,B.length)===1&&Math.max(A.length,B.length)<=2);};
+  const COMK=['paseo','disco','cena','limpieza'];
+  let famFilter='all', famQ='';
+  function analyse(){
+    const by=l=>entries.filter(e=>e.list===l).map(e=>({...e,tok:tokens(e.name)}));
+    const asis=by('asistentes'), chori=by('choripan');
+    const fams=asis.map(e=>({asis:e,chori:[],tok:[...e.tok],com:{paseo:[],disco:[],cena:[],limpieza:[]},label:e.name}));
+    const warns=[];
+    // duplicados dentro de la misma lista
+    [['asistentes',asis],['choripan',chori]].forEach(([l,arr])=>{
+      for(let i=0;i<arr.length;i++)for(let j=i+1;j<arr.length;j++){
+        if(isFamMatch(arr[i].tok,arr[j].tok)) warns.push(['warn','Posible duplicado en '+LISTS[l]+': «'+arr[i].name+'» y «'+arr[j].name+'»']);
+      }});
+    // enlazar pedidos de choripán con familias
+    chori.forEach(c=>{
+      let best=null,bs=0;fams.forEach(f=>{if(!f.asis)return;const m=overlap(c.tok,f.asis.tok);if(isFamMatch(c.tok,f.asis.tok)&&m>bs){bs=m;best=f;}});
+      if(best){best.chori.push(c);c.tok.forEach(t=>{if(!best.tok.some(x=>same(x,t)))best.tok.push(t);});}
+      else fams.push({asis:null,chori:[c],tok:[...c.tok],com:{paseo:[],disco:[],cena:[],limpieza:[]},label:c.name});
+    });
+    fams.forEach(f=>{if(f.chori.length>1)warns.push(['warn','Posible pedido de choripán duplicado para «'+f.label+'»: '+f.chori.map(c=>'«'+c.name+'»').join(' y ')]);});
+    // comisiones: persona -> familia
+    const loners=[];
+    COMK.forEach(k=>by(k).forEach(p=>{
+      const t=p.tok[0]||norm(p.name); const cand=fams.filter(f=>f.tok.some(x=>same(x,t)));
+      if(cand.length===1) cand[0].com[k].push({name:p.name,q:false});
+      else if(cand.length>1){cand.forEach(f=>f.com[k].push({name:p.name,q:true,cands:cand.map(c=>c.label)}));}
+      else loners.push({k,p});
+    }));
+    loners.forEach(({k,p})=>{
+      let f=fams.find(f=>!f.asis&&!f.chori.length&&f.tok.length===1&&same(f.tok[0],norm(p.name)));
+      if(!f){f={asis:null,chori:[],tok:[norm(p.name)],com:{paseo:[],disco:[],cena:[],limpieza:[]},label:p.name,solo:true};fams.push(f);}
+      f.com[k].push({name:p.name,q:false});
+    });
+    const amb={};fams.forEach(f=>COMK.forEach(k=>f.com[k].filter(x=>x.q).forEach(x=>{amb[k+'|'+x.name]=x;})));
+    Object.entries(amb).forEach(([key,x])=>warns.push(['info','«'+x.name+'» ('+LISTS[key.split('|')[0]]+') encaja en varias familias: '+x.cands.map(c=>'«'+c+'»').join(', ')]));
+    // mismo nombre en varias familias de asistentes
+    const seen={};asis.forEach(e=>e.tok.forEach(t=>{const k=t.split(' ')[0];(seen[k]=seen[k]||new Set()).add(e.name);}));
+    Object.entries(seen).forEach(([n,set])=>{if(set.size>1)warns.push(['info','El nombre «'+n+'» aparece en varias familias de asistentes: '+[...set].map(x=>'«'+x+'»').join(', ')+' (puede ser normal)']);});
+    const noAsis=fams.filter(f=>!f.asis&&f.chori.length).length, solo=fams.filter(f=>f.solo).length;
+    if(noAsis)warns.unshift(['warn',noAsis+(noAsis===1?' familia ha pedido':' familias han pedido')+' choripán pero no aparece'+(noAsis===1?'':'n')+' en asistentes (filtro «Sin asistencia»).']);
+    if(solo)warns.unshift(['warn',solo+(solo===1?' persona está':' personas están')+' en una comisión sin familia en asistentes ni en choripán.']);
+    return {fams,warns};
+  }
+  function renderFam(){
+    const {fams,warns}=analyse();
+    const tools=document.getElementById('famf');tools.innerHTML='';
+    const F={all:'Todas ('+fams.length+')',noasis:'Sin asistencia ('+fams.filter(f=>!f.asis).length+')',nochori:'Sin choripán ('+fams.filter(f=>!f.chori.length&&!f.solo).length+')',q:'Con «?» ('+fams.filter(f=>COMK.some(k=>f.com[k].some(x=>x.q))).length+')'};
+    Object.entries(F).forEach(([k,v])=>{const b=el('button',famFilter===k?'on':'',v);b.type='button';b.onclick=()=>{famFilter=k;renderFam();};tools.append(b);});
+    tools.classList.add('tabs');
+    const q=el('input');q.type='search';q.placeholder='🔎 Buscar nombre…';q.value=famQ;q.oninput=()=>{famQ=q.value;const pos=q.selectionStart;renderFam();const n=document.querySelector('#famf input');n.focus();n.setSelectionRange(pos,pos);};tools.append(q);
+    const t=document.getElementById('fam');t.innerHTML='';
+    const h=el('tr');['Familia','✅ Asiste','🌭 Choripán','🌳 Paseo','🪩 Disco','🍽️ Cena','🧹 Limpieza'].forEach((x,i)=>h.append(el('th',i>0&&i<3?'n':null,x)));t.append(h);
+    const qq=norm(famQ);
+    fams.filter(f=>famFilter==='all'||(famFilter==='noasis'&&!f.asis)||(famFilter==='nochori'&&!f.chori.length&&!f.solo)||(famFilter==='q'&&COMK.some(k=>f.com[k].some(x=>x.q))))
+      .filter(f=>!qq||norm(f.label+' '+f.chori.map(c=>c.name).join(' ')+' '+COMK.map(k=>f.com[k].map(x=>x.name).join(' ')).join(' ')).includes(qq))
+      .forEach(f=>{
+      const r=el('tr',(!f.asis||f.chori.length>1)?'warnrow':null);
+      const nm=el('td','fam-name',f.label);
+      if(f.asis&&f.chori.length&&f.chori[0].name!==f.asis.name)nm.append(el('small',null,'Choripán como: «'+f.chori.map(c=>c.name).join('», «')+'»'));
+      if(f.solo)nm.append(el('small',null,'Solo en comisiones'));
+      r.append(nm);
+      r.append(el('td','c '+(f.asis?'yes':'no'),f.asis?'✓':'✗'));
+      const cc=el('td','c');
+      if(f.chori.length){f.chori.forEach(c=>{const tot=c.normal+c.normal_sg+c.veg+c.veg_sg;const w=el('span','tip');w.tabIndex=0;
+        w.append(el('span',tot?'yes':'pill q',tot?'✓ '+tot:'¿cuántos?'));
+        const tt=el('span','tt');tt.append(el('b',null,c.name),document.createElement('br'));
+        TYPES.forEach(([k,ic,p])=>{if(c[k]){tt.append(document.createTextNode(ic+' '+c[k]+' × '+p+' € = '+c[k]*p+' €'));tt.append(document.createElement('br'));}});
+        tt.append(document.createTextNode(tot?('Total: '+TYPES.reduce((s,[k,,p])=>s+c[k]*p,0)+' €'):'Sin cantidad indicada'));w.append(tt);cc.append(w,document.createTextNode(' '));});}
+      else cc.append(el('span','no','✗'));
+      r.append(cc);
+      COMK.forEach(k=>{const td=el('td');f.com[k].forEach(x=>{const p=el('span','pill'+(x.q?' q':''),x.name+(x.q?' ?':''));if(x.q)p.title='Encaja en varias familias: '+x.cands.join(' / ');td.append(p);});r.append(td);});
+      t.append(r);
+    });
+    const wl=document.getElementById('warn');wl.innerHTML='';
+    warns.forEach(([c,txt])=>wl.append(el('li',c==='info'?'info':null,txt)));
+    if(!warns.length)wl.append(el('li','info','No se han detectado duplicados 🎉'));
+  }
+  async function loadLog(){
+    const ul=document.getElementById('log');
+    const d=await api('/log?limit=200');ul.innerHTML='';
+    d.log.forEach(l=>{
+      const li=el('li');li.append(el('span','t',fmt(l.at)+' · '),el('span','a-'+l.action,VERB[l.action]||l.action),document.createTextNode(' '),el('b',null,l.name||''),el('span','muted',' · '+(LISTS[l.list]||l.list)));
+      if(l.action==='edit'&&l.before&&l.after){
+        const ch=[];if(l.before.name!==l.after.name)ch.push('«'+l.before.name+'» → «'+l.after.name+'»');
+        TYPES.forEach(([k,ic])=>{if(l.before[k]!==l.after[k])ch.push(ic+' '+l.before[k]+'→'+l.after[k]);});
+        if(ch.length)li.append(el('span','muted',' ('+ch.join(' · ')+')'));
+      }
+      if(l.action==='delete'&&l.list==='choripan'&&l.before){const q=TYPES.filter(([k])=>l.before[k]).map(([k,ic])=>ic+' '+l.before[k]).join(' ');if(q)li.append(el('span','muted',' ('+q+')'));}
+      if(l.action==='delete'){const u=el('button','undo','↩︎ Deshacer');u.type='button';u.onclick=async()=>{try{await api('/log/'+l.id+'/restore',{method:'POST'});await load();}catch(e){alert(e.message);}};li.append(u);}
+      ul.append(li);
+    });
+    if(!d.log.length)ul.innerHTML='<li class="muted">Aún no hay cambios.</li>';
+  }
+  async function load(){
+    showErr('');
+    try{
+      await api('/admin');
+      const d=await api('/data');entries=d.entries||[];
+      kpis();renderFam();tabs();table();await loadLog();
+      document.getElementById('csv').href='/api/export.csv'+(key()?'?key='+encodeURIComponent(key()):'');
+    }catch(e){showErr(e.message);}
+  }
+  document.getElementById('reload').onclick=load;
+  load();
+})();
+</script>
+</body>
+</html>
