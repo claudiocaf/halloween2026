@@ -369,6 +369,39 @@ body.db-off [data-add]{opacity:.5;pointer-events:none}
 .otable .lk{margin-left:6px;font-size:.85rem}
 .paid-min{color:#1f7a3a!important;font-weight:800!important}
 .paid-note{margin:0;background:#e9f8ee;color:#1f5a33;border-radius:12px;padding:10px 12px;font-size:.9rem;font-weight:700}
+
+/* ===== Ayuda: pestaña fija + panel lateral ===== */
+.help-tab{position:fixed;left:0;top:50%;transform:translateY(-50%);z-index:32;display:flex;flex-direction:column;align-items:center;gap:6px;border:0;cursor:pointer;
+  background:var(--marigold);color:var(--night);padding:14px 8px;border-radius:0 16px 16px 0;font:900 .85rem "Nunito",sans-serif;box-shadow:0 6px 18px rgba(0,0,0,.35);transition:padding .2s}
+.help-tab b{writing-mode:vertical-rl;transform:rotate(180deg);letter-spacing:.03em}
+.help-tab span{font-size:1.1rem}
+.help-tab:hover,.help-tab:focus-visible{padding-left:12px;outline:none}
+@media (max-width:640px){.help-tab{padding:10px 6px;font-size:.78rem}.help-tab span{font-size:1rem}}
+.help-back{position:fixed;inset:0;z-index:55;background:rgba(20,8,40,.6);opacity:0;transition:opacity .25s}
+.help-back.on{opacity:1}
+.help{position:fixed;top:0;left:0;bottom:0;z-index:56;width:min(440px,100vw);overflow-y:auto;background:var(--cream);color:var(--card-ink);padding:20px 20px 32px;
+  transform:translateX(-102%);transition:transform .3s ease;box-shadow:12px 0 40px rgba(0,0,0,.35);border-radius:0 24px 24px 0;overscroll-behavior:contain}
+.help.open{transform:none}
+@media (max-width:640px){.help{border-radius:0}}
+.help-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
+.help-head h2{font-size:1.5rem}
+.help-x{width:40px;height:40px;flex:0 0 40px;border-radius:50%;border:0;background:var(--night);color:var(--cream);font-weight:900;font-size:1rem;cursor:pointer}
+.help-lead{margin:0 0 14px;color:var(--muted)}
+.hq{background:#fff;border-radius:16px;margin-bottom:10px;border:2px solid transparent}
+.hq[open]{border-color:#ffd29e}
+.hq summary{cursor:pointer;list-style:none;padding:14px 16px;font-weight:900;font-size:1.02rem;display:flex;justify-content:space-between;gap:8px}
+.hq summary::-webkit-details-marker{display:none}
+.hq summary::after{content:"＋";color:var(--orange-deep)}
+.hq[open] summary::after{content:"－"}
+.hq ol,.hq ul{margin:0;padding:0 16px 14px 34px}
+.hq li{margin:6px 0}
+.hq p{margin:0;padding:0 16px 14px}
+.hq a{color:var(--orange-deep);font-weight:800}
+.h-tag{background:var(--orange);color:#fff;border-radius:999px;padding:1px 8px;font-size:.78rem;font-weight:900}
+.help-wa{margin-top:18px;background:#e9f8ee;border-radius:16px;padding:16px;text-align:center}
+.help-wa p{margin:0 0 4px}
+body.help-lock{overflow:hidden}
+@media (min-width:821px){nav a[data-help-open]{display:none}}
 /* gallery */
 .gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:16px}
 .ph{padding:0;border:0;border-radius:16px;overflow:hidden;aspect-ratio:1;cursor:zoom-in;background:var(--night-2);box-shadow:0 4px 0 rgba(0,0,0,.15)}
@@ -438,6 +471,7 @@ footer .heart{font-family:"Grandstander";font-size:1.6rem;color:var(--marigold);
       <a href="#comisiones">🙋 Comisiones</a>
       <a href="#normas">🏡 Normas</a>
       <a href="#llevar">🎒 Qué llevar</a>
+      <a href="#ayuda" data-help-open>❓ Ayuda</a>
     </div>
   </div>
 </nav>
@@ -839,6 +873,76 @@ footer .heart{font-family:"Grandstander";font-size:1.6rem;color:var(--marigold);
   </div>
   <button type="button" class="ab-x" data-b="x" aria-label="Cerrar aviso">✕</button>
 </div>
+<button type="button" class="help-tab" id="helpTab" aria-controls="helpDrawer" aria-expanded="false"><span>❓</span><b>Cómo funciona</b></button>
+<div class="help-back" id="helpBack" hidden></div>
+<aside class="help" id="helpDrawer" aria-label="Cómo funciona la web" aria-hidden="true" tabindex="-1">
+  <div class="help-head">
+    <h2>❓ Cómo funciona la web</h2>
+    <button type="button" class="help-x" id="helpX" aria-label="Cerrar ayuda">✕</button>
+  </div>
+  <p class="help-lead">Todo lo de la fiesta se apunta <b>aquí, en la web</b>: asistencia, choripanes y comisiones. No hace falta registrarse ni contraseña.</p>
+
+  <details class="hq" open>
+    <summary>✅ Apuntar a mi familia a la fiesta</summary>
+    <ol>
+      <li>Ve a <a href="#asistentes" data-help-go>«¿Quién viene?»</a>.</li>
+      <li>Busca tu familia con el buscador 🔎. <b>Si ya estáis, no hace falta hacer nada.</b></li>
+      <li>Si no estáis, pulsa <b>«＋ Apuntar a mi familia»</b>, escribe los nombres (p. ej. <i>Luna, Jesús y Dani</i>) y <b>Guardar</b>.</li>
+    </ol>
+  </details>
+
+  <details class="hq">
+    <summary>🌭 Pedir choripanes</summary>
+    <ol>
+      <li>Ve a <a href="#cena" data-help-go>«Cena de choripán»</a> y pulsa <b>«Pedir / cambiar mis choripanes»</b>.</li>
+      <li>Escribe los nombres de la familia y usa <b>−</b> / <b>＋</b> para elegir cuántos de cada tipo: 🌭 normal, 🌭🚫 sin gluten, 🌱 vegetariano, 🌱🚫 vegetariano sin gluten.</li>
+      <li>Abajo ves el total en euros. Pulsa <b>Guardar</b>.</li>
+      <li>Tu pedido aparece en <b>«Pedidos de las familias»</b>.</li>
+    </ol>
+  </details>
+
+  <details class="hq">
+    <summary>🙋 Apuntarme a una comisión</summary>
+    <ol>
+      <li>Ve a <a href="#comisiones" data-help-go>«Comisiones»</a>.</li>
+      <li>En la comisión que quieras, pulsa <b>«＋ Apuntarme»</b>, escribe tu nombre y <b>Guardar</b>.</li>
+    </ol>
+    <p>💚 Es totalmente voluntario: se puede venir a la fiesta sin apuntarse a nada.</p>
+  </details>
+
+  <details class="hq">
+    <summary>✏️ Cambiar o quitar algo</summary>
+    <ul>
+      <li><b>Toca tu nombre o tu pedido</b> en cualquier lista: se abre para editarlo.</li>
+      <li>Cambia lo que necesites y pulsa <b>Guardar cambios</b>.</li>
+      <li>Para borrarte, pulsa <b>«Quitar»</b> y vuelve a pulsar para confirmar.</li>
+      <li>Lo que has apuntado desde tu móvil sale marcado como <span class="h-tag">vosotros</span>.</li>
+    </ul>
+  </details>
+
+  <details class="hq">
+    <summary>🔒 Pedidos cerrados o pagados</summary>
+    <ul>
+      <li>Cuando la comisión de cena haga la compra, <b>los pedidos se cerrarán</b> y el botón dirá «🔒 Pedidos cerrados».</li>
+      <li>Si ya has pagado tu pedido, <b>puedes añadir</b> más choripanes, pero no quitar los pagados.</li>
+      <li>Para cualquier cambio con los pedidos cerrados, habla con la comisión de cena.</li>
+    </ul>
+  </details>
+
+  <details class="hq">
+    <summary>💡 Consejos</summary>
+    <ul>
+      <li>Escribid el nombre de la familia <b>igual</b> en la asistencia y en el choripán, así es más fácil cuadrar las listas.</li>
+      <li>Si hay dos personas con el mismo nombre, añade algo más: <i>Marta (Pau I.)</i>.</li>
+      <li>Las listas se actualizan solas: lo que apunten los demás aparece en unos segundos.</li>
+    </ul>
+  </details>
+
+  <div class="help-wa">
+    <p><b>¿Dudas o algo no funciona?</b> Pregunta en el grupo de WhatsApp de la fiesta 👇</p>
+    <a class="wa-btn big" href="https://chat.whatsapp.com/GKQaPcK6yhkLTN2VTvp2y5" target="_blank" rel="noopener">💬 Ir al grupo de WhatsApp</a>
+  </div>
+</aside>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <div class="db-off-note" role="status">⚠️ Ahora mismo no se pueden cargar las listas. Prueba a recargar en un rato.</div>
 
@@ -1163,6 +1267,24 @@ const ALERGIAS = [];
     });
     try{history.replaceState(null,'','#'+id);}catch(err){}
   });
+})();
+
+// Panel de ayuda «Cómo funciona»
+(function(){
+  const d=document.getElementById('helpDrawer'),back=document.getElementById('helpBack'),tab=document.getElementById('helpTab');
+  let last=null;
+  function open(){last=document.activeElement;back.hidden=false;requestAnimationFrame(()=>{back.classList.add('on');d.classList.add('open');});
+    d.setAttribute('aria-hidden','false');tab.setAttribute('aria-expanded','true');document.body.classList.add('help-lock');setTimeout(()=>d.focus(),50);}
+  function close(){back.classList.remove('on');d.classList.remove('open');d.setAttribute('aria-hidden','true');tab.setAttribute('aria-expanded','false');
+    document.body.classList.remove('help-lock');setTimeout(()=>{back.hidden=true;},300);if(last&&last.focus)last.focus();}
+  tab.addEventListener('click',()=>d.classList.contains('open')?close():open());
+  document.getElementById('helpX').addEventListener('click',close);
+  back.addEventListener('click',close);
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&d.classList.contains('open'))close();});
+  document.querySelectorAll('[data-help-open]').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();
+    const nav=document.getElementById('nav');if(nav)nav.classList.remove('open');open();},true));
+  d.querySelectorAll('[data-help-go]').forEach(a=>a.addEventListener('click',()=>close()));
+  if(location.hash==='#ayuda')setTimeout(open,400);
 })();
 
 // Galería
