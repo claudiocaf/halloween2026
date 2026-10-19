@@ -37,6 +37,23 @@ td.n{text-align:center;white-space:nowrap}
 .muted{color:var(--muted)}
 .err{background:#ffe1e1;color:#8a1c1c;font-weight:800;padding:10px 14px;border-radius:12px;margin-bottom:14px}
 .scroll{overflow-x:auto}
+.paybar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:12px}
+.lockbtn{border:0;border-radius:999px;padding:10px 16px;font-weight:900;cursor:pointer;font-size:.95rem}
+.lockbtn.open{background:#e9f8ee;color:#1f5a33;border:2px solid #9fd9b2}
+.lockbtn.closed{background:#2d2a6e;color:#fff}
+.paysum{display:flex;flex-wrap:wrap;gap:8px}
+.paysum span{background:#f7f2ff;border-radius:999px;padding:4px 12px;font-weight:800;font-size:.9rem}
+.paysum .ok{background:#e9f8ee;color:#1f5a33}.paysum .due{background:#fff3cd;color:#8a5a00}
+#pay td.n{font-variant-numeric:tabular-nums}
+.st{display:inline-block;border-radius:999px;padding:2px 10px;font-weight:900;font-size:.8rem;white-space:nowrap}
+.st-paid{background:#e9f8ee;color:#1f7a3a}.st-part{background:#fff3cd;color:#8a5a00}.st-none{background:#f1eef6;color:#6b5a80}.st-zero{background:#ffe1e1;color:#b3261e}
+.acts{display:flex;flex-wrap:wrap;gap:6px}
+.acts button{border:2px solid var(--line);background:#fff;border-radius:999px;padding:4px 10px;font-weight:800;font-size:.82rem;cursor:pointer;color:var(--ink)}
+.acts button.pay{background:#1f7a3a;color:#fff;border-color:#1f7a3a}
+.acts button.lockd{background:#2d2a6e;color:#fff;border-color:#2d2a6e}
+.paidq{color:#1f7a3a;font-size:.78rem;display:block;font-weight:700}
+.keywarn{background:#fff3cd;color:#5c4100;border-radius:12px;padding:10px 12px;font-weight:700;margin-bottom:12px}
+
 .fam-tools{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;align-items:center}
 .fam-tools input{flex:1 1 180px;min-width:0;padding:8px 12px;border-radius:999px;border:2px solid var(--line);font:600 .95rem system-ui,sans-serif}
 #fam td,#fam th{white-space:normal}
@@ -67,6 +84,18 @@ td.n{text-align:center;white-space:nowrap}
   </div>
   <div class="cards" id="kpis"></div>
 
+  <div class="card" id="paycard">
+    <h2>💶 Pedidos y pagos de choripán</h2>
+    <div id="paykey"></div>
+    <div class="paybar">
+      <button type="button" class="lockbtn open" id="lockall">🔓 Pedidos abiertos · pulsa para cerrar</button>
+      <div class="paysum" id="paysum"></div>
+    </div>
+    <div class="fam-tools tabs" id="payf"></div>
+    <div class="scroll"><table id="pay"></table></div>
+    <p class="muted" style="margin-bottom:0;font-size:.85rem">«Marcar pagado» guarda lo que la familia ha pagado. Si después añade choripanes, pasa a <b>parcial</b> y verás cuánto falta. Lo pagado no se puede quitar desde la web (sí con «Anular pago»).</p>
+  </div>
+
   <div class="card">
     <h2>👥 Resumen por familia</h2>
     <p class="muted" style="margin-top:0">Cruza todas las listas comparando nombres. Es automático: revisa las marcas <span class="pill q">?</span> (el nombre encaja en varias familias).</p>
@@ -96,7 +125,7 @@ td.n{text-align:center;white-space:nowrap}
   const LS=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v);}catch(e){return null;}};
   const LISTS={asistentes:'✅ Asistentes',choripan:'🌭 Choripán',paseo:'🌳 Paseo',disco:'🪩 Disco',cena:'🍽️ Cena',limpieza:'🧹 Limpieza'};
   const TYPES=[['normal','🌭',2],['normal_sg','🌭🚫',3],['veg','🌱',3],['veg_sg','🌱🚫',4]];
-  const VERB={add:'añadió',edit:'cambió',delete:'quitó',restore:'recuperó'};
+  const VERB={add:'añadió',edit:'cambió',delete:'quitó',restore:'recuperó',pay:'💶 marcó pagado',unpay:'anuló el pago de',lock:'🔒 bloqueó',unlock:'🔓 desbloqueó',lock_all:'🔒',unlock_all:'🔓'};
   let entries=[], tab='asistentes';
   const el=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e;};
   const fmt=s=>s?new Date(s.replace(' ','T')+'Z').toLocaleString('es-ES',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',timeZone:'Europe/Madrid'}):'';
@@ -219,6 +248,48 @@ td.n{text-align:center;white-space:nowrap}
     warns.forEach(([c,txt])=>wl.append(el('li',c==='info'?'info':null,txt)));
     if(!warns.length)wl.append(el('li','info','No se han detectado duplicados 🎉'));
   }
+
+  // ===== Pagos y bloqueo =====
+  let choriLocked=false, payFilter='all', hasKey=true;
+  const eurOf=(e,pre='')=>TYPES.reduce((s,[k,,p])=>s+(e[pre+k]||0)*p,0);
+  const payState=e=>{const t=eurOf(e),p=eurOf(e,'paid_');if(!t)return 'zero';if(!p)return 'none';return p>=t?'paid':'part';};
+  const ST={paid:['st-paid','✅ Pagado'],part:['st-part','🟠 Parcial'],none:['st-none','Pendiente'],zero:['st-zero','¿cuántos?']};
+  function renderPay(){
+    const lb=document.getElementById('lockall');
+    lb.className='lockbtn '+(choriLocked?'closed':'open');
+    lb.textContent=choriLocked?'🔒 Pedidos CERRADOS · pulsa para reabrir':'🔓 Pedidos abiertos · pulsa para cerrar';
+    document.getElementById('paykey').innerHTML=hasKey?'':'<div class="keywarn">⚠️ Para cerrar pedidos y marcar pagos, primero configura el secreto <b>ADMIN_KEY</b> en Cloudflare (Settings → Variables and Secrets) y vuelve a desplegar.</div>';
+    const ch=entries.filter(e=>e.list==='choripan');
+    const tot=ch.reduce((s,e)=>s+eurOf(e),0), paid=ch.reduce((s,e)=>s+eurOf(e,'paid_'),0);
+    const cnt=k=>ch.filter(e=>payState(e)===k).length;
+    const ps=document.getElementById('paysum');ps.innerHTML='';
+    [['','Total '+tot+' €'],['ok','Cobrado '+paid+' €'],['due','Falta '+(tot-paid)+' €']].forEach(([c,t])=>ps.append(el('span',c,t)));
+    const f=document.getElementById('payf');f.innerHTML='';
+    [['all','Todos ('+ch.length+')'],['none','Pendientes ('+cnt('none')+')'],['part','Parciales ('+cnt('part')+')'],['paid','Pagados ('+cnt('paid')+')'],['zero','Sin cantidad ('+cnt('zero')+')']].forEach(([k,v])=>{
+      const b=el('button',payFilter===k?'on':'',v);b.type='button';b.onclick=()=>{payFilter=k;renderPay();};f.append(b);});
+    const t=document.getElementById('pay');t.innerHTML='';
+    const h=el('tr');['Familia',...TYPES.map(([,ic])=>ic),'Total','Pagado','Falta','Estado',''].forEach((x,i)=>h.append(el('th',i>0&&i<8?'n':null,x)));t.append(h);
+    ch.filter(e=>payFilter==='all'||payState(e)===payFilter).forEach(e=>{
+      const r=el('tr'),st=payState(e),T=eurOf(e),P=eurOf(e,'paid_');
+      const nm=el('td',null,e.name);if(e.locked)nm.append(el('span','muted',' 🔒'));r.append(nm);
+      TYPES.forEach(([k])=>{const td=el('td','n',e[k]?String(e[k]):'·');if(e['paid_'+k]&&e['paid_'+k]!==e[k])td.append(el('span','paidq','✓'+e['paid_'+k]));r.append(td);});
+      r.append(el('td','n',T+' €'),el('td','n',P?P+' €':'·'));
+      const fl=el('td','n',T-P>0&&P?(T-P)+' €':(T-P>0?T+' €':'·'));if(st==='part')fl.style.cssText='color:#8a5a00;font-weight:900';r.append(fl);
+      const sc=el('td');sc.append(el('span','st '+ST[st][0],ST[st][1]));r.append(sc);
+      const ac=el('td');const box=el('div','acts');
+      const btn=(txt,cls,fn,conf)=>{const b=el('button',cls,txt);b.type='button';b.onclick=async()=>{if(conf&&!confirm(conf))return;try{await fn();await load();}catch(err){alert(err.message);}};box.append(b);};
+      const post=a=>api('/admin/entries/'+e.id+'/'+a,{method:'POST'});
+      if(st==='none'||st==='part')btn(st==='part'?'✓ Cobrar lo que falta ('+(T-P)+' €)':'✓ Marcar pagado ('+T+' €)','pay',()=>post('pay'));
+      if(P)btn('Anular pago','',()=>post('unpay'),'¿Anular el pago de «'+e.name+'»? Volverá a aparecer como pendiente.');
+      btn(e.locked?'🔓 Desbloquear':'🔒 Bloquear',e.locked?'lockd':'',()=>post(e.locked?'unlock':'lock'));
+      ac.append(box);r.append(ac);t.append(r);
+    });
+  }
+  document.getElementById('lockall').onclick=async()=>{
+    const to=!choriLocked;
+    if(to&&!confirm('¿Cerrar los pedidos de choripán? Nadie podrá añadir ni cambiar pedidos desde la web.'))return;
+    try{await api('/admin/chori-lock',{method:'POST',body:JSON.stringify({locked:to})});await load();}catch(e){alert(e.message);}
+  };
   async function loadLog(){
     const ul=document.getElementById('log');
     const d=await api('/log?limit=200');ul.innerHTML='';
@@ -238,9 +309,9 @@ td.n{text-align:center;white-space:nowrap}
   async function load(){
     showErr('');
     try{
-      await api('/admin');
-      const d=await api('/data');entries=d.entries||[];
-      kpis();renderFam();tabs();table();await loadLog();
+      const ad=await api('/admin');hasKey=ad.has_key!==false;
+      const d=await api('/data');entries=d.entries||[];choriLocked=!!d.chori_locked;
+      kpis();renderPay();renderFam();tabs();table();await loadLog();
       document.getElementById('csv').href='/api/export.csv'+(key()?'?key='+encodeURIComponent(key()):'');
     }catch(e){showErr(e.message);}
   }

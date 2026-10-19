@@ -364,6 +364,11 @@ body.db-off [data-add]{opacity:.5;pointer-events:none}
   .check{grid-template-columns:1fr 1fr}
 }
 
+.lock-note{margin:10px 0 0;background:#eef0ff;color:#2d2a6e;border-radius:12px;padding:10px 12px;font-size:.92rem}
+.btn.closed{background:#ddd6ea;color:#6b5a80;box-shadow:0 5px 0 #c3b9d6}
+.otable .lk{margin-left:6px;font-size:.85rem}
+.paid-min{color:#1f7a3a!important;font-weight:800!important}
+.paid-note{margin:0;background:#e9f8ee;color:#1f5a33;border-radius:12px;padding:10px 12px;font-size:.9rem;font-weight:700}
 /* gallery */
 .gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:16px}
 .ph{padding:0;border:0;border-radius:16px;overflow:hidden;aspect-ratio:1;cursor:zoom-in;background:var(--night-2);box-shadow:0 4px 0 rgba(0,0,0,.15)}
@@ -671,6 +676,7 @@ footer .heart{font-family:"Grandstander";font-size:1.6rem;color:var(--marigold);
           <div><span>🌱🚫</span><b id="t-veg_sg">–</b>Veg. sin gluten</div>
         </div>
         <p class="small warn-line" id="chori-miss" hidden></p>
+        <p class="lock-note" id="chori-lock" hidden>🔒 <b>Pedidos cerrados.</b> Ya no se pueden hacer ni cambiar pedidos desde la web. Si necesitas algo, habla con la comisión de cena.</p>
         <p class="small" style="margin:8px 0 0"><span data-updated></span></p>
       </div>
     </div>
@@ -925,12 +931,15 @@ const ALERGIAS = [];
   const TYPES=[['normal','🌭','Normal'],['normal_sg','🌭🚫','Normal, pan sin gluten'],['veg','🌱','Vegetariano / vegano'],['veg_sg','🌱🚫','Vegetariano / vegano, pan sin gluten']];
   const SHORT={normal:'Normal',normal_sg:'Normal sin gluten',veg:'Vegetariano',veg_sg:'Vegetariano sin gluten'};
   const COMS={paseo:'Paseo por el bosque',disco:'Discomóvil',cena:'Cena',limpieza:'Recogida y limpieza'};
-  let entries=[], loaded=false, updatedAt=null;
+  let entries=[], loaded=false, updatedAt=null, choriLocked=false;
   let mine=new Set(); try{mine=new Set(JSON.parse(LS('h26-mine')||'[]'));}catch(e){}
   const saveMine=()=>LS('h26-mine',JSON.stringify([...mine]));
   const el=(tag,cls,txt)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e;};
   const byList=l=>entries.filter(e=>e.list===l);
   const qtot=e=>e.normal+e.normal_sg+e.veg+e.veg_sg;
+  const paidOf=e=>TYPES.reduce((s,[k])=>s+(e['paid_'+k]||0),0);
+  const isAdm=()=>!!LS('h26-admin');
+  const closedFor=e=>!isAdm()&&(choriLocked||(e&&e.locked));
   const money=e=>TYPES.reduce((s,[k])=>s+e[k]*PRICES[k],0);
   const toDate=s=>s?new Date(s.replace(' ','T')+'Z'):null;
   const fmt=d=>d?d.toLocaleString('es-ES',{day:'numeric',month:'long',hour:'2-digit',minute:'2-digit',timeZone:'Europe/Madrid'}):'';
@@ -938,7 +947,7 @@ const ALERGIAS = [];
 
   // ---------- red ----------
   async function call(method,path,body){
-    const h={'content-type':'application/json'}; const code=LS('h26-code'); if(code)h['x-edit-code']=code;
+    const h={'content-type':'application/json'}; const code=LS('h26-code'); if(code)h['x-edit-code']=code; const ak=LS('h26-admin'); if(ak)h['x-admin-key']=ak;
     const r=await fetch(API+path,{method,headers:h,body:body?JSON.stringify(body):undefined});
     let d={}; try{d=await r.json();}catch(e){}
     if(r.status===401&&d.need_code){
@@ -950,7 +959,7 @@ const ALERGIAS = [];
   async function load(silent){
     try{
       const r=await fetch(API+'/data',{cache:'no-store'}); if(!r.ok) throw 0;
-      const d=await r.json(); entries=d.entries||[]; updatedAt=d.updated_at; loaded=true;
+      const d=await r.json(); entries=d.entries||[]; updatedAt=d.updated_at; choriLocked=!!d.chori_locked; loaded=true;
       document.body.classList.remove('db-off'); renderAll();
     }catch(e){ if(!loaded){document.body.classList.add('db-off');} }
   }
@@ -985,6 +994,9 @@ const ALERGIAS = [];
     document.getElementById('chori-tot').textContent=all;
     TYPES.forEach(([k])=>{const n=document.getElementById('t-'+k);if(n)n.textContent=tot[k];});
     const eur=TYPES.reduce((s,[k])=>s+tot[k]*PRICES[k],0); document.getElementById('chori-eur').textContent=eur;
+    const pb=document.querySelector('[data-add="choripan"]'), ln=document.getElementById('chori-lock');
+    pb.textContent=choriLocked?'🔒 Pedidos cerrados':'🌭 Pedir / cambiar mis choripanes'; pb.classList.toggle('closed',choriLocked&&!isAdm());
+    ln.hidden=!choriLocked;
     const miss=list.filter(e=>!qtot(e)).length; const mm=document.getElementById('chori-miss');
     mm.textContent=miss?('⚠️ '+miss+(miss===1?' familia aún no ha indicado cuántos.':' familias aún no han indicado cuántos.')):''; mm.hidden=!miss;
     box.innerHTML='';
@@ -996,7 +1008,7 @@ const ALERGIAS = [];
     shown.forEach(e=>{
       const tr=el('tr',mine.has(e.id)?'mine':'');tr.tabIndex=0;tr.setAttribute('role','button');tr.setAttribute('aria-label','Editar pedido de '+e.name);
       const go=()=>openForm('choripan',e);tr.onclick=go;tr.onkeydown=ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();go();}};
-      const nm=el('td','o-name');nm.append(el('span',null,e.name));if(mine.has(e.id))nm.append(el('span','tag','vosotros'));tr.append(nm);
+      const nm=el('td','o-name');nm.append(el('span',null,e.name));if(mine.has(e.id))nm.append(el('span','tag','vosotros'));if(e.locked||choriLocked){const lk=el('span','lk','🔒');lk.title='Pedido cerrado';nm.append(lk);}tr.append(nm);
       const t=qtot(e);
       TYPES.forEach(([k,ic,txt])=>{const td=el('td','o-n'+(e[k]?' has':''));td.setAttribute('data-l',ic);td.textContent=e[k]||'–';td.title=txt;tr.append(td);});
       const eu=el('td','o-n o-eur');eu.setAttribute('data-l','€');eu.textContent=t?money(e)+' €':'¿cuántos?';if(!t)eu.classList.add('o-warn');tr.append(eu);
@@ -1018,6 +1030,7 @@ const ALERGIAS = [];
   // ---------- formulario (añadir / editar / quitar) ----------
   const dlg=document.getElementById('form-dlg');
   function openForm(list,entry){
+    if(list==='choripan'&&closedFor(entry)){toast(choriLocked?'🔒 Los pedidos de choripán están cerrados.':'🔒 Este pedido está bloqueado. Habla con la comisión de cena.');return;}
     const f=dlg.querySelector('form'); f.innerHTML=''; const isNew=!entry;
     const titles={asistentes:isNew?'✅ Apuntar a mi familia':'✏️ Editar familia',choripan:isNew?'🌭 Pedir choripanes':'✏️ Cambiar pedido'};
     f.append(el('h3',null,titles[list]||(isNew?'🙋 Apuntarme a ':'✏️ Editar · ')+(COMS[list]||'')));
@@ -1032,11 +1045,14 @@ const ALERGIAS = [];
       TYPES.forEach(([k,ic,txt])=>{
         const row=el('div','step'); const lb=el('span','st-l',SHORT[k]);lb.append(el('small',null,PRICES[k]+' €'));row.append(el('span','st-ic',ic),lb);
         const minus=el('button','st-b','−'),plus=el('button','st-b','+'),n=el('input','st-n');minus.type=plus.type='button';
-        n.type='number';n.min=0;n.max=40;n.name=k;n.inputMode='numeric';n.value=entry?entry[k]:0;n.setAttribute('aria-label',txt);
-        minus.onclick=()=>{n.value=Math.max(0,(+n.value||0)-1);upd();};plus.onclick=()=>{n.value=Math.min(40,(+n.value||0)+1);upd();};n.oninput=upd;
+        const pmin=entry?(entry['paid_'+k]||0):0;
+        n.type='number';n.min=pmin;n.max=40;n.name=k;n.inputMode='numeric';n.value=entry?entry[k]:0;n.setAttribute('aria-label',txt);
+        if(pmin)lb.append(el('small','paid-min','✓ '+pmin+' pagado'+(pmin>1?'s':'')));
+        minus.onclick=()=>{n.value=Math.max(pmin,(+n.value||0)-1);upd();};plus.onclick=()=>{n.value=Math.min(40,(+n.value||0)+1);upd();};n.oninput=upd;
         const c=el('span','st-c');c.append(minus,n,plus);row.append(c);g.append(row);
       });
-      sum=el('p','st-sum'); f.append(g,sum);
+      if(entry&&paidOf(entry)){f.append(g,el('p','paid-note','💶 Parte de este pedido ya está pagado: los choripanes pagados no se pueden quitar, pero sí puedes añadir más.'));}else f.append(g);
+      sum=el('p','st-sum'); f.append(sum);
       function upd(){const v=TYPES.map(([k])=>+f.elements[k].value||0);const t=v.reduce((a,b)=>a+b,0);const eur=TYPES.reduce((s,[k],i)=>s+v[i]*PRICES[k],0);sum.textContent=t?('Total: '+t+' '+(t>1?'choripanes':'choripán')+' · '+eur+' €'):'Elige cuántos de cada tipo.';}
       upd();
     }
@@ -1045,7 +1061,7 @@ const ALERGIAS = [];
     const save=el('button','btn',isNew?'Guardar':'Guardar cambios'); save.type='submit';
     const cancel=el('button','btn ghost','Cancelar'); cancel.type='button'; cancel.onclick=()=>dlg.close();
     act.append(save,cancel);
-    if(!isNew){
+    if(!isNew&&!(list==='choripan'&&paidOf(entry))){
       const del=el('button','btn danger',list==='asistentes'?'Quitar de la lista':list==='choripan'?'Quitar pedido':'Quitarme');del.type='button';
       let armed=false; const delTxt=del.textContent; del.onclick=async()=>{
         if(!armed){armed=true;del.textContent='¿Seguro? Toca otra vez';setTimeout(()=>{armed=false;del.textContent=delTxt;},4000);return;}
@@ -1058,7 +1074,7 @@ const ALERGIAS = [];
     f.onsubmit=async ev=>{
       ev.preventDefault(); err.textContent='';
       const body={list,name:inp.value,website:hp.value};
-      if(list==='choripan'){TYPES.forEach(([k])=>body[k]=+f.elements[k].value||0);
+      if(list==='choripan'){TYPES.forEach(([k])=>body[k]=Math.max(entry?(entry['paid_'+k]||0):0,+f.elements[k].value||0));
         if(!TYPES.some(([k])=>body[k])){err.textContent='Indica al menos un choripán.';return;}}
       try{
         busy(true);
