@@ -146,7 +146,7 @@ html{scroll-behavior:smooth}
 <script>
 (function(){
   const LS=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v);}catch(e){return null;}};
-  const LISTS={asistentes:'✅ Asistentes',choripan:'🌭 Choripán',paseo:'🌳 Paseo',disco:'🪩 Disco',cena:'🍽️ Cena',limpieza:'🧹 Limpieza',alergias:'⚠️ Alergias'};
+  const LISTS={asistentes:'✅ Asistentes',choripan:'🌭 Choripán',paseo:'🌳 Paseo',disco:'🪩 Disco',cena:'🍽️ Cena',altar:'🕯️ Altar',limpieza:'🧹 Limpieza',alergias:'⚠️ Alergias'};
   const TYPES=[['normal','🌭',2],['normal_sg','🌭🚫',3],['veg','🌱',3],['veg_sg','🌱🚫',4]];
   const VERB={add:'añadió',edit:'cambió',delete:'quitó',restore:'recuperó',pay:'💶 marcó pagado',unpay:'anuló el pago de',lock:'🔒 bloqueó',unlock:'🔓 desbloqueó',lock_all:'🔒',unlock_all:'🔓'};
   let entries=[], tab='asistentes';
@@ -168,7 +168,7 @@ html{scroll-behavior:smooth}
     const eur=TYPES.reduce((s,[,,p],i)=>s+tot[i]*p,0);
     [[by("asistentes").length,'familias asistentes'],[tot.reduce((a,b)=>a+b,0),'choripanes ('+TYPES.map(([,ic],i)=>ic+' '+tot[i]).join(' · ')+')'],[eur+' €','total choripán'],
      [ch.filter(e=>!(e.normal+e.normal_sg+e.veg+e.veg_sg)).length,'pedidos sin cantidad'],
-     [['paseo','disco','cena','limpieza'].map(k=>by(k).length).join(' / '),'paseo / disco / cena / limpieza']].forEach(([n,t])=>{
+     [COMK.map(k=>by(k).length).join(' / '),COMK.join(' / ')]].forEach(([n,t])=>{
       const k=el('div','k');k.append(el('b',null,String(n)),el('span',null,t));box.append(k);});
   }
   function tabs(){
@@ -195,12 +195,12 @@ html{scroll-behavior:smooth}
     return fa.length>=4&&dd(fa)===dd(fb)&&(!a.includes(' ')||!b.includes(' ')||a.split(' ')[1][0]===b.split(' ')[1][0]);}
   function overlap(A,B){const used=new Set();let m=0;A.forEach(a=>{const j=B.findIndex((b,i)=>!used.has(i)&&same(a,b));if(j>=0){used.add(j);m++;}});return m;}
   const isFamMatch=(A,B)=>{const m=overlap(A,B);return m>=2||(m>=1&&Math.min(A.length,B.length)===1&&Math.max(A.length,B.length)<=2);};
-  const COMK=['paseo','disco','cena','limpieza'];
+  const COMK=['paseo','disco','cena','altar','limpieza'];
   let famFilter='all', famQ='';
   function analyse(){
     const by=l=>entries.filter(e=>e.list===l).map(e=>({...e,tok:tokens(e.name)}));
     const asis=by('asistentes'), chori=by('choripan');
-    const fams=asis.map(e=>({asis:e,chori:[],tok:[...e.tok],com:{paseo:[],disco:[],cena:[],limpieza:[]},label:e.name}));
+    const fams=asis.map(e=>({asis:e,chori:[],tok:[...e.tok],com:{paseo:[],disco:[],cena:[],altar:[],limpieza:[]},label:e.name}));
     const warns=[];
     // duplicados dentro de la misma lista
     [['asistentes',asis],['choripan',chori]].forEach(([l,arr])=>{
@@ -211,7 +211,7 @@ html{scroll-behavior:smooth}
     chori.forEach(c=>{
       let best=null,bs=0;fams.forEach(f=>{if(!f.asis)return;const m=overlap(c.tok,f.asis.tok);if(isFamMatch(c.tok,f.asis.tok)&&m>bs){bs=m;best=f;}});
       if(best){best.chori.push(c);c.tok.forEach(t=>{if(!best.tok.some(x=>same(x,t)))best.tok.push(t);});}
-      else fams.push({asis:null,chori:[c],tok:[...c.tok],com:{paseo:[],disco:[],cena:[],limpieza:[]},label:c.name});
+      else fams.push({asis:null,chori:[c],tok:[...c.tok],com:{paseo:[],disco:[],cena:[],altar:[],limpieza:[]},label:c.name});
     });
     fams.forEach(f=>{if(f.chori.length>1)warns.push(['warn','Posible pedido de choripán duplicado para «'+f.label+'»: '+f.chori.map(c=>'«'+c.name+'»').join(' y ')]);});
     // comisiones: persona -> familia
@@ -224,7 +224,7 @@ html{scroll-behavior:smooth}
     }));
     loners.forEach(({k,p})=>{
       let f=fams.find(f=>!f.asis&&!f.chori.length&&f.tok.length===1&&same(f.tok[0],norm(p.name)));
-      if(!f){f={asis:null,chori:[],tok:[norm(p.name)],com:{paseo:[],disco:[],cena:[],limpieza:[]},label:p.name,solo:true};fams.push(f);}
+      if(!f){f={asis:null,chori:[],tok:[norm(p.name)],com:{paseo:[],disco:[],cena:[],altar:[],limpieza:[]},label:p.name,solo:true};fams.push(f);}
       f.com[k].push({name:p.name,q:false});
     });
     const amb={};fams.forEach(f=>COMK.forEach(k=>f.com[k].filter(x=>x.q).forEach(x=>{amb[k+'|'+x.name]=x;})));
@@ -245,7 +245,7 @@ html{scroll-behavior:smooth}
     tools.classList.add('tabs');
     const q=el('input');q.type='search';q.placeholder='🔎 Buscar nombre…';q.value=famQ;q.oninput=()=>{famQ=q.value;const pos=q.selectionStart;renderFam();const n=document.querySelector('#famf input');n.focus();n.setSelectionRange(pos,pos);};tools.append(q);
     const t=document.getElementById('fam');t.innerHTML='';
-    const h=el('tr');['Familia','✅ Asiste','🌭 Choripán','🌳 Paseo','🪩 Disco','🍽️ Cena','🧹 Limpieza'].forEach((x,i)=>h.append(el('th',i>0&&i<3?'n':null,x)));t.append(h);
+    const h=el('tr');['Familia','✅ Asiste','🌭 Choripán','🌳 Paseo','🪩 Disco','🍽️ Cena','🕯️ Altar','🧹 Limpieza'].forEach((x,i)=>h.append(el('th',i>0&&i<3?'n':null,x)));t.append(h);
     const qq=norm(famQ);
     fams.filter(f=>famFilter==='all'||(famFilter==='noasis'&&!f.asis)||(famFilter==='nochori'&&!f.chori.length&&!f.solo)||(famFilter==='q'&&COMK.some(k=>f.com[k].some(x=>x.q))))
       .filter(f=>!qq||norm(f.label+' '+f.chori.map(c=>c.name).join(' ')+' '+COMK.map(k=>f.com[k].map(x=>x.name).join(' ')).join(' ')).includes(qq))

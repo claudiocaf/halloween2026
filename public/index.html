@@ -789,6 +789,14 @@ footer .heart{font-family:"Grandstander";font-size:1.6rem;color:var(--marigold);
         <button type="button" class="wa-btn add-btn" data-add="cena">＋ Apuntarme</button>
       </div>
       <div class="card com">
+        <div class="emoji">🕯️</div>
+        <span class="when">Toda la tarde · Altar de muertos</span>
+        <h3>Altar de muertos</h3>
+        <p>Una tradición mexicana del Día de Muertos (1 y 2 de noviembre): se monta una ofrenda para recordar con cariño a quienes ya no están, con fotos, velas, flores de cempasúchil, papel picado, pan de muerto y calaveritas de azúcar. Montar el altar y animar a las familias a traer una foto o un recuerdo.</p>
+        <div class="chips" data-com="altar"><span class="small">Cargando…</span></div>
+        <button type="button" class="wa-btn add-btn" data-add="altar">＋ Apuntarme</button>
+      </div>
+      <div class="card com">
         <div class="emoji">🧹</div>
         <span class="when">22:30–23:30 · Recogida y limpieza</span>
         <h3>Dejamos Tierra como estaba</h3>
@@ -1073,7 +1081,7 @@ footer .heart{font-family:"Grandstander";font-size:1.6rem;color:var(--marigold);
   const PRICES={normal:2,normal_sg:3,veg:3,veg_sg:4};
   const TYPES=[['normal','🌭','Normal'],['normal_sg','🌭🚫','Normal, pan sin gluten'],['veg','🌱','Vegetariano / vegano'],['veg_sg','🌱🚫','Vegetariano / vegano, pan sin gluten']];
   const SHORT={normal:'Normal',normal_sg:'Normal sin gluten',veg:'Vegetariano',veg_sg:'Vegetariano sin gluten'};
-  const COMS={paseo:'Paseo por el bosque',disco:'Discomóvil',cena:'Cena',limpieza:'Recogida y limpieza'};
+  const COMS={paseo:'Paseo por el bosque',disco:'Discomóvil',cena:'Cena',altar:'Altar de muertos',limpieza:'Recogida y limpieza'};
   let entries=[], loaded=false, updatedAt=null, choriLocked=false;
   let mine=new Set(); try{mine=new Set(JSON.parse(LS('h26-mine')||'[]'));}catch(e){}
   const saveMine=()=>LS('h26-mine',JSON.stringify([...mine]));

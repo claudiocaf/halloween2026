@@ -6,7 +6,7 @@
 // Opcional: variable EDIT_CODE. Si existe, para modificar hay que conocer ese código
 // (una palabra que se comparte en el grupo de WhatsApp, para evitar spam de bots).
 
-const LISTS = ['asistentes', 'choripan', 'paseo', 'disco', 'cena', 'limpieza', 'alergias'];
+const LISTS = ['asistentes', 'choripan', 'paseo', 'disco', 'cena', 'altar', 'limpieza', 'alergias'];
 const QTY = ['normal', 'normal_sg', 'veg', 'veg_sg'];
 const MAX_NAME = 160;
 const MAX_QTY = 40;
