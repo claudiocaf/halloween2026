@@ -99,7 +99,14 @@ html{scroll-behavior:smooth}
   </div>
   <div class="cards" id="kpis"></div>
 
+  <div class="card" id="compra">
+    <h2>🛒 Lista de la compra</h2>
+    <table id="compra-t"></table>
+    <p class="muted" style="margin:10px 0 0;font-size:.85rem">Incluye un 20 % extra por si viene alguien sin pedido o alguien quiere repetir. De cada barra salen 3 choripanes.</p>
+  </div>
+
   <nav class="qnav" id="qnav" aria-label="Secciones">
+    <a href="#compra">🛒 Compra</a>
     <a href="#paycard">💶 Pagos</a>
     <a href="#familias">👥 Familias</a>
     <a href="#avisos">🔍 Avisos <span class="qb" id="qb-warn"></span></a>
@@ -170,6 +177,18 @@ html{scroll-behavior:smooth}
      [ch.filter(e=>!(e.normal+e.normal_sg+e.veg+e.veg_sg)).length,'pedidos sin cantidad'],
      [COMK.map(k=>by(k).length).join(' / '),COMK.join(' / ')]].forEach(([n,t])=>{
       const k=el('div','k');k.append(el('b',null,String(n)),el('span',null,t));box.append(k);});
+  }
+  function compra(){
+    const ch=entries.filter(e=>e.list==='choripan'), sum=k=>ch.reduce((s,e)=>s+(e[k]||0),0);
+    const n=sum('normal'),nsg=sum('normal_sg'),v=sum('veg'),vsg=sum('veg_sg');
+    const extra=x=>Math.ceil(x*12/10), barras=x=>Math.ceil(x/3);
+    const t=document.getElementById('compra-t');t.innerHTML='';
+    const h=el('tr');['Producto','Pedidos','A comprar (+20 %)'].forEach((x,i)=>h.append(el('th',i?'n':null,x)));t.append(h);
+    [['🌭 Chorizos normales',n+nsg,extra(n+nsg)],
+     ['🌱 Chorizos vegetales',v+vsg,extra(v+vsg)],
+     ['🥖 Barras de pan normales',barras(n+v),barras(extra(n+v))],
+     ['🥖🚫 Barras de pan sin gluten',barras(nsg+vsg),barras(extra(nsg+vsg))]].forEach(([l,a,b])=>{
+      const r=el('tr');r.append(el('td',null,l),el('td','n',String(a)),el('td','n',null));r.lastChild.append(el('b',null,String(b)));t.append(r);});
   }
   function tabs(){
     const b=document.getElementById('tabs');b.innerHTML='';
@@ -358,7 +377,7 @@ html{scroll-behavior:smooth}
     try{
       const ad=await api('/admin');hasKey=ad.has_key!==false;
       const d=await api('/data');entries=d.entries||[];choriLocked=!!d.chori_locked;
-      kpis();renderPay();renderFam();tabs();table();await loadLog();
+      kpis();compra();renderPay();renderFam();tabs();table();await loadLog();
       document.getElementById('csv').href='/api/export.csv'+(key()?'?key='+encodeURIComponent(key()):'');
     }catch(e){showErr(e.message);}
   }
