@@ -144,6 +144,9 @@ ul.tick.star li::before{content:"✨"}
 .callout.pink{background:var(--pink);color:#fff}
 .callout.teal{background:var(--teal)}
 .callout p{margin:0}
+.price-note{text-decoration:none;font-weight:600;line-height:1.45}
+.price-note b{font-weight:900}
+.hero .price-note{margin-top:22px;text-align:left}
 
 /* commissions */
 .com{position:relative;overflow:hidden}
@@ -561,6 +564,8 @@ footer .heart{font-family:"Grandstander";font-size:1.6rem;color:var(--marigold);
       <div class="cd"><b id="cd-m">–</b><small>min</small></div>
       <div class="cd"><b id="cd-s">–</b><small>seg</small></div>
     </div>
+
+    <a class="callout pink price-note" href="#cena"><span class="big">🌭</span><p><b>📢 Nuevos precios del choripán.</b> Al revisar las cuentas vimos que los precios no estaban bien calculados y no cubrían el coste. Los precios correctos son: 🌭 Normal 3 € · 🌭🚫 Sin gluten 4 € · 🌱 Vegetariano 4 € · 🌱🚫 Vegetariano sin gluten 4 €. ¡Gracias por entenderlo! 💛 Si sobra algo, se entregará a Tierra.</p></a>
   </div>
 </header>
 
@@ -707,14 +712,16 @@ footer .heart{font-family:"Grandstander";font-size:1.6rem;color:var(--marigold);
       <div><h2>Cena de choripán</h2><p>A las 21:00, todas juntas. Maxi, con la ayuda de la comisión de cena, prepara los choripanes 🙌</p></div>
     </div>
 
+    <div class="callout pink price-note" style="margin-bottom:16px"><span class="big">🌭</span><p><b>📢 Nuevos precios del choripán.</b> Al revisar las cuentas vimos que los precios no estaban bien calculados y no cubrían el coste. Los precios correctos son: 🌭 Normal 3 € · 🌭🚫 Sin gluten 4 € · 🌱 Vegetariano 4 € · 🌱🚫 Vegetariano sin gluten 4 €. ¡Gracias por entenderlo! 💛 Si sobra algo, se entregará a Tierra.</p></div>
+
     <div class="cena-top">
       <div class="card">
         <h3>🛒 Elige y pide</h3>
         <p class="small" style="margin:0">Para hacer la compra, cada familia apunta aquí cuántos quiere de cada tipo.</p>
         <div class="menu menu4">
-          <div class="dish"><span>🌭</span>Normal<br><small class="small">(de cerdo)</small><b class="price">2 €</b></div>
-          <div class="dish"><span>🌭🚫</span>Normal,<br>pan sin gluten<b class="price">3 €</b></div>
-          <div class="dish"><span>🌱</span>Vegetariano<br>/ vegano<b class="price">3 €</b></div>
+          <div class="dish"><span>🌭</span>Normal<br><small class="small">(de cerdo)</small><b class="price">3 €</b></div>
+          <div class="dish"><span>🌭🚫</span>Normal,<br>pan sin gluten<b class="price">4 €</b></div>
+          <div class="dish"><span>🌱</span>Vegetariano<br>/ vegano<b class="price">4 €</b></div>
           <div class="dish"><span>🌱🚫</span>Vegetariano,<br>pan sin gluten<b class="price">4 €</b></div>
         </div>
         <button type="button" class="btn big-btn" data-add="choripan">🌭 Pedir / cambiar mis choripanes</button>
@@ -885,7 +892,7 @@ footer .heart{font-family:"Grandstander";font-size:1.6rem;color:var(--marigold);
       <details class="faq"><summary>🌳 ¿Qué es el paseo por el bosque?</summary><div class="faq-a"><p>A las <b>18:30</b> las personas voluntarias de la comisión acompañan a los peques al bosque a preparar una <b>poción mágica</b> que «transforma» el cole. Mientras tanto, las familias montan los puestos para que, al volver, la magia ya esté hecha.</p></div></details>
       <details class="faq"><summary>👨‍👩‍👧 ¿Quién puede venir?</summary><div class="faq-a"><p>Las <b>familias de Tierra que se apunten</b> en <a href="#asistentes" data-faq-go>«¿Quién viene?»</a>. Si excepcionalmente tienes visitas ese día, pueden venir bajo tu responsabilidad, acompañando a sus peques.</p></div></details>
       <details class="faq"><summary>🧙 ¿Cómo vienen los peques?</summary><div class="faq-a"><p>Ya <b>disfrazados</b> desde casa. Esqueletos, calabazas y fantasmas, sí; <b>máscaras que asusten o sustos fuertes, no</b>: queremos un ambiente amable para los más pequeños.</p></div></details>
-      <details class="faq"><summary>🌭 ¿Cuánto cuesta el choripán y cómo lo pido?</summary><div class="faq-a"><p>🌭 Normal 2 € · 🌭🚫 Sin gluten 3 € · 🌱 Vegetariano 3 € · 🌱🚫 Vegetariano sin gluten 4 €. Pídelo en <a href="#cena" data-faq-go>Cena de choripán</a>. El pago se gestiona con la comisión de cena. Cada familia trae su bebida, platos, vasos, cubiertos y servilletas.</p></div></details>
+      <details class="faq"><summary>🌭 ¿Cuánto cuesta el choripán y cómo lo pido?</summary><div class="faq-a"><p>🌭 Normal 3 € · 🌭🚫 Sin gluten 4 € · 🌱 Vegetariano 4 € · 🌱🚫 Vegetariano sin gluten 4 €. Pídelo en <a href="#cena" data-faq-go>Cena de choripán</a>. El pago se gestiona con la comisión de cena. Cada familia trae su bebida, platos, vasos, cubiertos y servilletas.</p></div></details>
       <details class="faq"><summary>💡 ¿Hay luz en el cole?</summary><div class="faq-a"><p><b>No</b>, de noche está muy oscuro. Si haces puesto, trae iluminación (luces a pilas, linternas…). Y una linterna para moverse viene bien a todas.</p></div></details>
       <details class="faq"><summary>🚗 ¿Dónde aparco?</summary><div class="faq-a"><p><b>No en la puerta del cole.</b> Deja el coche en la calle asfaltada sin bloquear accesos, y cuidemos el ruido al llegar y al salir.</p></div></details>
       <details class="faq"><summary>🕙 ¿A qué hora termina?</summary><div class="faq-a"><p>La fiesta se va cerrando entre las <b>22:00 y las 22:30</b>. La comisión de recogida se queda hasta las 23:30 para dejar Tierra como estaba. Mira el <a href="#programa" data-faq-go>programa completo</a>.</p></div></details>
@@ -1078,7 +1085,7 @@ footer .heart{font-family:"Grandstander";font-size:1.6rem;color:var(--marigold);
   const API='/api';
   const LS=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k);if(v===null)localStorage.removeItem(k);else localStorage.setItem(k,v);}catch(e){return null;}};
   const SS=(k,v)=>{try{if(v===undefined)return sessionStorage.getItem(k);sessionStorage.setItem(k,v);}catch(e){return null;}};
-  const PRICES={normal:2,normal_sg:3,veg:3,veg_sg:4};
+  const PRICES={normal:3,normal_sg:4,veg:4,veg_sg:4};
   const TYPES=[['normal','🌭','Normal'],['normal_sg','🌭🚫','Normal, pan sin gluten'],['veg','🌱','Vegetariano / vegano'],['veg_sg','🌱🚫','Vegetariano / vegano, pan sin gluten']];
   const SHORT={normal:'Normal',normal_sg:'Normal sin gluten',veg:'Vegetariano',veg_sg:'Vegetariano sin gluten'};
   const COMS={paseo:'Paseo por el bosque',disco:'Discomóvil',cena:'Cena',altar:'Altar de muertos',limpieza:'Recogida y limpieza'};

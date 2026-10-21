@@ -84,6 +84,26 @@ html{scroll-behavior:smooth}
 .wlist li.info{background:#eef5ff;color:#1d3f66}
 .fam-name small{display:block;color:var(--muted);font-size:.78rem}
 
+.sim-h{font-size:1rem;margin:16px 0 6px}
+.sim-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:6px 0}
+.sim-row b{font-size:1.05rem}
+.sim-row small{display:block;color:var(--muted)}
+.sim-step{display:flex;align-items:center;gap:8px;flex:0 0 auto}
+.sim-step button{width:36px;height:36px;border-radius:50%;border:2px solid var(--line);background:#fff;color:var(--ink);font-size:1.2rem;line-height:1;cursor:pointer}
+.sim-step span{min-width:70px;text-align:center;font-weight:800;font-variant-numeric:tabular-nums}
+.sim-costs{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+.sim-costs label{display:flex;flex-direction:column;gap:4px;font-size:.85rem;font-weight:800;color:var(--muted)}
+.sim-in{display:flex;align-items:center;gap:6px;border:2px solid var(--line);border-radius:12px;padding:0 12px;background:#fff;color:var(--ink)}
+.sim-in:focus-within{border-color:var(--orange)}
+.sim-in input{flex:1;min-width:0;border:0;outline:0;background:transparent;font:800 1.05rem system-ui,sans-serif;color:var(--ink);padding:9px 0}
+.sim-sum{background:#f7f2ff;border-radius:14px;padding:6px 16px;margin-top:16px}
+.sim-sum .r{display:flex;justify-content:space-between;gap:12px;padding:8px 0;font-variant-numeric:tabular-nums}
+.sim-sum .r span:first-child{color:var(--muted)}
+.sim-sum .r.sm{padding:0 0 4px 12px;font-size:.85rem}
+.sim-sum .r.tot{border-top:1px solid var(--line);margin-top:4px;padding-top:12px;font-size:1.15rem;font-weight:900}
+.sim-sum .r.tot span:first-child{color:var(--ink)}
+.pos{color:#1f7a3a}.neg{color:#b3261e}
+
 </style>
 </head>
 <body id="top">
@@ -105,8 +125,20 @@ html{scroll-behavior:smooth}
     <p class="muted" style="margin:10px 0 0;font-size:.85rem">Incluye un 20 % extra por si viene alguien sin pedido o alguien quiere repetir. De cada barra salen 3 choripanes.</p>
   </div>
 
+  <div class="card" id="simulador">
+    <h2>🧮 Simulador de costes</h2>
+    <p class="muted" style="margin:0;font-size:.85rem">Solo para hacer cuentas: aquí no se cambian los precios de la web. Los valores se guardan en este navegador.</p>
+    <h3 class="sim-h">Precios de venta</h3>
+    <div id="sim-sale"></div>
+    <h3 class="sim-h">Costes de compra (por unidad)</h3>
+    <div class="sim-costs" id="sim-cost"></div>
+    <div class="sim-sum" id="sim-sum"></div>
+    <p class="muted" style="margin:10px 0 0;font-size:.85rem">El margen disponible tiene que cubrir también salsas, condimentos y otros gastos.</p>
+  </div>
+
   <nav class="qnav" id="qnav" aria-label="Secciones">
     <a href="#compra">🛒 Compra</a>
+    <a href="#simulador">🧮 Simulador</a>
     <a href="#paycard">💶 Pagos</a>
     <a href="#familias">👥 Familias</a>
     <a href="#avisos">🔍 Avisos <span class="qb" id="qb-warn"></span></a>
@@ -154,7 +186,7 @@ html{scroll-behavior:smooth}
 (function(){
   const LS=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v);}catch(e){return null;}};
   const LISTS={asistentes:'✅ Asistentes',choripan:'🌭 Choripán',paseo:'🌳 Paseo',disco:'🪩 Disco',cena:'🍽️ Cena',altar:'🕯️ Altar',limpieza:'🧹 Limpieza',alergias:'⚠️ Alergias'};
-  const TYPES=[['normal','🌭',2],['normal_sg','🌭🚫',3],['veg','🌱',3],['veg_sg','🌱🚫',4]];
+  const TYPES=[['normal','🌭',3],['normal_sg','🌭🚫',4],['veg','🌱',4],['veg_sg','🌱🚫',4]];
   const VERB={add:'añadió',edit:'cambió',delete:'quitó',restore:'recuperó',pay:'💶 marcó pagado',unpay:'anuló el pago de',lock:'🔒 bloqueó',unlock:'🔓 desbloqueó',lock_all:'🔒',unlock_all:'🔓'};
   let entries=[], tab='asistentes';
   const el=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e;};
@@ -178,10 +210,15 @@ html{scroll-behavior:smooth}
      [COMK.map(k=>by(k).length).join(' / '),COMK.join(' / ')]].forEach(([n,t])=>{
       const k=el('div','k');k.append(el('b',null,String(n)),el('span',null,t));box.append(k);});
   }
-  function compra(){
+  // cantidades pedidas y lo que hay que comprar (+20 %, 3 choripanes por barra)
+  function needs(){
     const ch=entries.filter(e=>e.list==='choripan'), sum=k=>ch.reduce((s,e)=>s+(e[k]||0),0);
-    const n=sum('normal'),nsg=sum('normal_sg'),v=sum('veg'),vsg=sum('veg_sg');
+    const q={normal:sum('normal'),normal_sg:sum('normal_sg'),veg:sum('veg'),veg_sg:sum('veg_sg')};
     const extra=x=>Math.ceil(x*12/10), barras=x=>Math.ceil(x/3);
+    return {q,extra,barras,chor:extra(q.normal+q.normal_sg),chorV:extra(q.veg+q.veg_sg),bar:barras(extra(q.normal+q.veg)),barSg:barras(extra(q.normal_sg+q.veg_sg))};
+  }
+  function compra(){
+    const {q,extra,barras}=needs(), n=q.normal,nsg=q.normal_sg,v=q.veg,vsg=q.veg_sg;
     const t=document.getElementById('compra-t');t.innerHTML='';
     const h=el('tr');['Producto','Pedidos','A comprar (+20 %)'].forEach((x,i)=>h.append(el('th',i?'n':null,x)));t.append(h);
     [['🌭 Chorizos normales',n+nsg,extra(n+nsg)],
@@ -190,6 +227,46 @@ html{scroll-behavior:smooth}
      ['🥖🚫 Barras de pan sin gluten',barras(nsg+vsg),barras(extra(nsg+vsg))]].forEach(([l,a,b])=>{
       const r=el('tr');r.append(el('td',null,l),el('td','n',String(a)),el('td','n',null));r.lastChild.append(el('b',null,String(b)));t.append(r);});
   }
+  // ---------- simulador de costes ----------
+  const SIM_DEF={sale:Object.fromEntries(TYPES.map(([k,,p])=>[k,p])),cost:{chor:1.75,chorV:2.40,bar:1,barSg:2.15}};
+  const SIM_NAMES={normal:'Normal',normal_sg:'Normal sin gluten',veg:'Vegetariano',veg_sg:'Vegetariano sin gluten'};
+  const SIM_COSTS=[['chor','🌭 Chorizo normal','unidad'],['chorV','🌱 Chorizo vegetal','unidad'],['bar','🥖 Barra de pan normal','barra'],['barSg','🥖🚫 Barra sin gluten','barra']];
+  const eu=x=>x.toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
+  const sim=JSON.parse(JSON.stringify(SIM_DEF));
+  try{const s=JSON.parse(localStorage.getItem('h26-sim')||'{}');['sale','cost'].forEach(g=>Object.keys(sim[g]).forEach(k=>{if(s[g]&&isFinite(s[g][k]))sim[g][k]=+s[g][k];}));}catch(e){}
+  const simSave=()=>{try{localStorage.setItem('h26-sim',JSON.stringify(sim));}catch(e){}};
+  function simInit(){
+    const sale=document.getElementById('sim-sale');
+    TYPES.forEach(([k,ic])=>{
+      const r=el('div','sim-row'), l=el('div'), qn=el('small');qn.id='sim-q-'+k;l.append(el('b',null,ic+' '+SIM_NAMES[k]),qn);
+      const st=el('div','sim-step'), m=el('button',null,'−'), p=el('button',null,'+'), v=el('span');v.id='sim-p-'+k;
+      m.type=p.type='button';m.setAttribute('aria-label','Bajar precio '+SIM_NAMES[k]);p.setAttribute('aria-label','Subir precio '+SIM_NAMES[k]);
+      const go=d=>{sim.sale[k]=Math.max(0,Math.round((sim.sale[k]+d)*100)/100);simSave();simCalc();};
+      m.onclick=()=>go(-.5);p.onclick=()=>go(.5);st.append(m,v,p);r.append(l,st);sale.append(r);
+    });
+    const cost=document.getElementById('sim-cost');
+    SIM_COSTS.forEach(([k,t,u])=>{
+      const lb=el('label',null,t+' (€/'+u+')'), w=el('span','sim-in'), i=el('input');
+      i.type='text';i.inputMode='decimal';i.value=String(sim.cost[k]).replace('.',',');
+      i.oninput=()=>{const x=parseFloat(i.value.replace(',','.'));sim.cost[k]=isFinite(x)&&x>=0?x:0;simSave();simCalc();};
+      w.append(i,el('span',null,'€'));lb.append(w);cost.append(lb);
+    });
+  }
+  function simCalc(){
+    const N=needs(), c=sim.cost;
+    TYPES.forEach(([k])=>{document.getElementById('sim-q-'+k).textContent=N.q[k]+' pedidos';document.getElementById('sim-p-'+k).textContent=eu(sim.sale[k]);});
+    const inc=TYPES.reduce((s,[k])=>s+N.q[k]*sim.sale[k],0);
+    const parts=[[N.chor,'chorizos normales',c.chor],[N.chorV,'chorizos vegetales',c.chorV],[N.bar,'barras normales',c.bar],[N.barSg,'barras sin gluten',c.barSg]];
+    const cost=parts.reduce((s,[n,,p])=>s+n*p,0), mg=inc-cost;
+    const box=document.getElementById('sim-sum');box.innerHTML='';
+    const row=(cls,a,b,bc)=>{const r=el('div','r'+(cls?' '+cls:''));r.append(el('span',null,a),el('span',bc||null,b));box.append(r);};
+    row('','Ingreso previsto',eu(inc));
+    row('','Coste con margen del 20 %',eu(cost));
+    parts.forEach(([n,t,p])=>row('sm',n+' '+t+' × '+eu(p),eu(n*p)));
+    row('tot','Margen disponible',(mg>=0?'+':'−')+eu(Math.abs(mg)),mg>=0?'pos':'neg');
+  }
+  simInit();
+
   function tabs(){
     const b=document.getElementById('tabs');b.innerHTML='';
     Object.entries(LISTS).forEach(([k,v])=>{const x=el('button',k===tab?'on':'',v+' ('+entries.filter(e=>e.list===k).length+')');x.type='button';x.onclick=()=>{tab=k;tabs();table();};b.append(x);});
@@ -377,7 +454,7 @@ html{scroll-behavior:smooth}
     try{
       const ad=await api('/admin');hasKey=ad.has_key!==false;
       const d=await api('/data');entries=d.entries||[];choriLocked=!!d.chori_locked;
-      kpis();compra();renderPay();renderFam();tabs();table();await loadLog();
+      kpis();compra();simCalc();renderPay();renderFam();tabs();table();await loadLog();
       document.getElementById('csv').href='/api/export.csv'+(key()?'?key='+encodeURIComponent(key()):'');
     }catch(e){showErr(e.message);}
   }
