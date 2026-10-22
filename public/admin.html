@@ -185,7 +185,7 @@ html{scroll-behavior:smooth}
 <script>
 (function(){
   const LS=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v);}catch(e){return null;}};
-  const LISTS={asistentes:'✅ Asistentes',choripan:'🌭 Choripán',paseo:'🌳 Paseo',disco:'🪩 Disco',cena:'🍽️ Cena',altar:'🕯️ Altar',limpieza:'🧹 Limpieza',alergias:'⚠️ Alergias'};
+  const LISTS={asistentes:'✅ Asistentes',choripan:'🌭 Choripán',puestos:'🏠 Puestos',paseo:'🌳 Paseo',disco:'🪩 Disco',cena:'🍽️ Cena',altar:'🕯️ Altar',limpieza:'🧹 Limpieza',alergias:'⚠️ Alergias'};
   const TYPES=[['normal','🌭',3],['normal_sg','🌭🚫',4],['veg','🌱',4],['veg_sg','🌱🚫',4]];
   const VERB={add:'añadió',edit:'cambió',delete:'quitó',restore:'recuperó',pay:'💶 marcó pagado',unpay:'anuló el pago de',lock:'🔒 bloqueó',unlock:'🔓 desbloqueó',lock_all:'🔒',unlock_all:'🔓'};
   let entries=[], tab='asistentes';
@@ -206,7 +206,7 @@ html{scroll-behavior:smooth}
     const ch=by('choripan'), tot=TYPES.map(([k])=>ch.reduce((s,e)=>s+e[k],0));
     const eur=TYPES.reduce((s,[,,p],i)=>s+tot[i]*p,0);
     [[by("asistentes").length,'familias asistentes'],[tot.reduce((a,b)=>a+b,0),'choripanes ('+TYPES.map(([,ic],i)=>ic+' '+tot[i]).join(' · ')+')'],[eur+' €','total choripán'],
-     [ch.filter(e=>!(e.normal+e.normal_sg+e.veg+e.veg_sg)).length,'pedidos sin cantidad'],
+     [ch.filter(e=>!(e.normal+e.normal_sg+e.veg+e.veg_sg)).length,'pedidos sin cantidad'],[by('puestos').length,'puestos apuntados'],
      [COMK.map(k=>by(k).length).join(' / '),COMK.join(' / ')]].forEach(([n,t])=>{
       const k=el('div','k');k.append(el('b',null,String(n)),el('span',null,t));box.append(k);});
   }
@@ -275,9 +275,11 @@ html{scroll-behavior:smooth}
     const t=document.getElementById('tbl');t.innerHTML='';const rows=entries.filter(e=>e.list===tab);
     const head=el('tr');head.append(el('th',null,'#'),el('th',null,'Nombre'));
     if(tab==='choripan')TYPES.forEach(([,ic])=>head.append(el('th','n',ic)));
+    if(tab==='puestos')head.append(el('th',null,'Qué puesto'));
     head.append(el('th',null,'Actualizado'));t.append(head);
     rows.forEach((e,i)=>{const r=el('tr');r.append(el('td','muted',String(i+1)),el('td',null,e.name));
       if(tab==='choripan')TYPES.forEach(([k])=>r.append(el('td','n',e[k]?String(e[k]):'·')));
+      if(tab==='puestos')r.append(el('td','muted',e.detail||'·'));
       r.append(el('td','t',fmt(e.updated_at)));t.append(r);});
     if(!rows.length){const r=el('tr'),c=el('td','muted','Vacía');c.colSpan=7;r.append(c);t.append(r);}
   }
@@ -440,6 +442,7 @@ html{scroll-behavior:smooth}
       const li=el('li');li.append(el('span','t',fmt(l.at)+' · '),el('span','a-'+l.action,VERB[l.action]||l.action),document.createTextNode(' '),el('b',null,l.name||''),el('span','muted',' · '+(LISTS[l.list]||l.list)));
       if(l.action==='edit'&&l.before&&l.after){
         const ch=[];if(l.before.name!==l.after.name)ch.push('«'+l.before.name+'» → «'+l.after.name+'»');
+        if((l.before.detail||'')!==(l.after.detail||''))ch.push('«'+(l.before.detail||'—')+'» → «'+(l.after.detail||'—')+'»');
         TYPES.forEach(([k,ic])=>{if(l.before[k]!==l.after[k])ch.push(ic+' '+l.before[k]+'→'+l.after[k]);});
         if(ch.length)li.append(el('span','muted',' ('+ch.join(' · ')+')'));
       }

@@ -258,6 +258,7 @@ main,.hero .wrap,footer .wrap,.picado{position:relative;z-index:2}
 .row.mine{background:#fff3e0;border-color:#ffd29e}
 .row-name{flex:1 1 auto;min-width:0}
 .row-edit{opacity:.55;font-size:.9rem}
+.row-d{flex-basis:100%;font-weight:600;font-size:.88rem;color:var(--muted)}
 .row-q{flex-basis:100%;display:flex;flex-wrap:wrap;gap:6px}
 .qq{background:#fff;border-radius:999px;padding:2px 10px;font-size:.88rem;color:var(--plum)}
 .qq.eur{background:var(--marigold);color:var(--night)}
@@ -642,6 +643,20 @@ footer .heart{font-family:"Grandstander";font-size:1.6rem;color:var(--marigold);
       <div><h2>Puestos de truco o trato</h2><p>Las familias que quieran preparan una «casita» a la que llaman los peques.</p></div>
     </div>
 
+    <div class="callout teal" style="margin-bottom:16px"><span class="big">🏮</span><p><b>Los puestos son el corazón de la fiesta.</b> La fiesta es para los peques, y el truco o trato existe gracias a los puestos que montan las familias. No es obligatorio montar uno para venir, pero os lo recomendamos mucho: es lo que hace la fiesta especial para ellos. Y saber cuántos habrá nos ayuda a organizar mejor los espacios. 💛</p></div>
+
+    <div class="card" style="margin-bottom:16px">
+      <h3>📋 Puestos apuntados</h3>
+      <div class="stat" style="margin-top:6px">
+        <div><b id="pue-n">–</b>puestos apuntados</div>
+      </div>
+      <div class="list-tools">
+        <button type="button" class="btn" data-add="puestos">＋ Apuntar un puesto</button>
+      </div>
+      <div id="pue-list" class="rows"><p class="small">Cargando lista…</p></div>
+      <p class="small hint-edit">Toca un puesto para cambiarlo o quitarlo. ¿Compartís puesto con otra familia? Apuntadlo una sola vez con todos los nombres. <span data-updated></span></p>
+    </div>
+
     <div class="grid g2 puestos-grid">
       <div class="card">
           <h3>¿Cómo funciona?</h3>
@@ -887,7 +902,7 @@ footer .heart{font-family:"Grandstander";font-size:1.6rem;color:var(--marigold);
     <div class="faq-grid">
       <details class="faq"><summary>🍬 ¿En qué consiste el «truco o trato»?</summary><div class="faq-a"><p>Es el momento central de la fiesta para los peques. Las familias que quieren preparan un <b>pequeño puesto</b> en el camino de entrada del cole que hace de «casita». Hacia las <b>19:15</b>, cuando los peques vuelven del paseo por el bosque, van de puesto en puesto diciendo <b>«¿truco o trato?»</b> y en cada uno reciben un <b>pequeño detalle</b>.</p><p>El detalle puede ser algo sano para comer (fruta, frutos secos, bizcocho casero…) o algo que no se come (pegatinas, una manualidad, una piedrita pintada…). Lo importante es que sea bonito y sin sustos.</p></div></details>
       <details class="faq"><summary>🍎 ¿Qué se puede dar en el puesto?</summary><div class="faq-a"><ul><li><b>Nada de chuches ni azúcares refinados.</b></li><li>Si das comida, pon una <b>lista visible con todos los ingredientes</b>.</li><li>Revisa la sección de <a href="#alergias" data-faq-go>alergias e intolerancias</a> antes de prepararlo.</li></ul></div></details>
-      <details class="faq"><summary>🏠 ¿Tengo que montar un puesto?</summary><div class="faq-a"><p><b>No.</b> Es totalmente voluntario. Si te apetece, ¡genial! Puedes hacerlo solo o compartirlo con otra familia. Si no, ven a disfrutar igualmente.</p></div></details>
+      <details class="faq"><summary>🏠 ¿Tengo que montar un puesto?</summary><div class="faq-a"><p><b>No.</b> Es totalmente voluntario, aunque os lo recomendamos mucho: los puestos son lo que hace especial la fiesta para los peques. Puedes hacerlo solo o compartirlo con otra familia. Si lo montáis, apuntadlo en <a href="#puestos" data-faq-go>Puestos</a>: saber cuántos habrá nos ayuda a organizar los espacios.</p></div></details>
       <details class="faq"><summary>🙋 ¿Tengo que apuntarme a una comisión?</summary><div class="faq-a"><p><b>No.</b> Se puede venir a la fiesta sin participar en la organización. Si tienes ganas, apúntate en <a href="#comisiones" data-faq-go>Comisiones</a>; también se puede echar una mano antes de la fiesta.</p></div></details>
       <details class="faq"><summary>🌳 ¿Qué es el paseo por el bosque?</summary><div class="faq-a"><p>A las <b>18:30</b> las personas voluntarias de la comisión acompañan a los peques al bosque a preparar una <b>poción mágica</b> que «transforma» el cole. Mientras tanto, las familias montan los puestos para que, al volver, la magia ya esté hecha.</p></div></details>
       <details class="faq"><summary>👨‍👩‍👧 ¿Quién puede venir?</summary><div class="faq-a"><p>Las <b>familias de Tierra que se apunten</b> en <a href="#asistentes" data-faq-go>«¿Quién viene?»</a>. Si excepcionalmente tienes visitas ese día, pueden venir bajo tu responsabilidad, acompañando a sus peques.</p></div></details>
@@ -926,6 +941,16 @@ footer .heart{font-family:"Grandstander";font-size:1.6rem;color:var(--marigold);
   <label class="fld"><span>Código</span><input autocomplete="off" required></label>
   <div class="f-act"><button class="btn" type="submit">Continuar</button><button class="btn ghost" type="button" data-cancel>Cancelar</button></div>
 </form></dialog>
+<div id="pue-banner" class="asis-banner" role="region" aria-label="Aviso de puestos">
+  <span class="ab-ic">🏮</span>
+  <p><b>¿Montáis un puesto?</b> La fiesta es para los peques y los puestos son el corazón del truco o trato. No es obligatorio, pero os animamos mucho (¡también se puede compartir con otra familia!).</p>
+  <div class="ab-act">
+    <button type="button" class="btn sm" data-b="add">Apuntar puesto</button>
+    <button type="button" class="btn ghost sm" data-b="later">Esta vez no</button>
+    <button type="button" class="btn ghost sm" data-b="no">No montaremos</button>
+  </div>
+  <button type="button" class="ab-x" data-b="x" aria-label="Cerrar aviso">✕</button>
+</div>
 <div id="asis-banner" class="asis-banner" role="region" aria-label="Aviso de asistencia">
   <span class="ab-ic">👻</span>
   <p><b>¿Venís a la fiesta?</b> Comprobad que vuestra familia está en la lista de asistentes.</p>
@@ -942,7 +967,7 @@ footer .heart{font-family:"Grandstander";font-size:1.6rem;color:var(--marigold);
     <h2>❓ Cómo funciona la web</h2>
     <button type="button" class="help-x" id="helpX" aria-label="Cerrar ayuda">✕</button>
   </div>
-  <p class="help-lead">Todo lo de la fiesta se apunta <b>aquí, en la web</b>: asistencia, choripanes y comisiones. No hace falta registrarse ni contraseña.</p>
+  <p class="help-lead">Todo lo de la fiesta se apunta <b>aquí, en la web</b>: asistencia, choripanes, puestos y comisiones. No hace falta registrarse ni contraseña.</p>
 
   <details class="hq" open>
     <summary>✅ Apuntar a mi familia a la fiesta</summary>
@@ -961,6 +986,16 @@ footer .heart{font-family:"Grandstander";font-size:1.6rem;color:var(--marigold);
       <li>Abajo ves el total en euros. Pulsa <b>Guardar</b>.</li>
       <li>Tu pedido aparece en <b>«Pedidos de las familias»</b>.</li>
     </ol>
+  </details>
+
+  <details class="hq">
+    <summary>🏠 Apuntar mi puesto</summary>
+    <ol>
+      <li>Ve a <a href="#puestos" data-help-go>«Puestos»</a> y pulsa <b>«＋ Apuntar un puesto»</b>.</li>
+      <li>Escribe la familia o familias que lo montan y, si quieres, qué puesto vais a hacer. Pulsa <b>Guardar</b>.</li>
+      <li>Si compartís puesto con otra familia, apuntadlo <b>una sola vez</b> con todos los nombres.</li>
+    </ol>
+    <p>💚 No es obligatorio, pero os lo recomendamos mucho.</p>
   </details>
 
   <details class="hq">
@@ -1123,7 +1158,7 @@ footer .heart{font-family:"Grandstander";font-size:1.6rem;color:var(--marigold);
   }
 
   // ---------- render ----------
-  function renderAll(){renderAsis();renderChori();renderCom();renderAlerg();renderUpdated();maybeBanner();}
+  function renderAll(){renderAsis();renderChori();renderPue();renderCom();renderAlerg();renderUpdated();maybeBanner();maybePue();}
   const ALG=[[/gluten|trigo|cebada|centeno|avena|celiac|celíac/i,'🌾'],[/lact|leche|láct|lact|queso|mantequilla|caseína|proteína de vaca|aplv/i,'🥛'],[/huevo/i,'🥚'],
     [/cacahuete|man[ií]|frutos? secos?|nuez|nueces|almendra|avellana|anacardo|pistacho|piñ[oó]n/i,'🥜'],[/soja/i,'🫘'],[/pescado/i,'🐟'],[/marisco|crust|gamba|molusc/i,'🦐'],
     [/s[eé]samo/i,'⚪'],[/fresa/i,'🍓'],[/kiwi/i,'🥝'],[/melocot|albaricoque|ciruela|cereza|rosácea/i,'🍑'],[/pl[aá]tano/i,'🍌'],[/tomate/i,'🍅'],[/legumbre|garbanzo|lenteja|guisante|altramuz/i,'🫛'],
@@ -1154,6 +1189,14 @@ footer .heart{font-family:"Grandstander";font-size:1.6rem;color:var(--marigold);
     const shown=list.filter(e=>!q||e.name.toLowerCase().includes(q));
     shown.forEach(e=>{const b=editBtn(e);b.append(el('span','row-name',e.name));if(mine.has(e.id))b.append(el('span','tag','vosotros'));b.append(el('span','row-edit','✏️'));box.append(b);});
     if(!shown.length) box.append(el('p','small',q?'Nadie coincide con «'+q+'». ¿Os apuntáis?':'Aún no hay nadie en la lista.'));
+  }
+  function renderPue(){
+    const box=document.getElementById('pue-list'); if(!box) return;
+    const list=byList('puestos'); document.getElementById('pue-n').textContent=list.length;
+    box.innerHTML='';
+    list.forEach(e=>{const b=editBtn(e);b.append(el('span','row-name',e.name));if(mine.has(e.id))b.append(el('span','tag','vosotros'));b.append(el('span','row-edit','✏️'));
+      if(e.detail)b.append(el('span','row-d',e.detail));box.append(b);});
+    if(!list.length) box.append(el('p','small','Aún no hay puestos apuntados. ¿Os animáis a ser los primeros?'));
   }
   function renderChori(){
     const box=document.getElementById('chori-list'); if(!box) return;
@@ -1202,13 +1245,19 @@ footer .heart{font-family:"Grandstander";font-size:1.6rem;color:var(--marigold);
   function openForm(list,entry){
     if(list==='choripan'&&closedFor(entry)){toast(choriLocked?'🔒 Los pedidos de choripán están cerrados.':'🔒 Este pedido está bloqueado. Habla con la comisión de cena.');return;}
     const f=dlg.querySelector('form'); f.innerHTML=''; const isNew=!entry;
-    const titles={asistentes:isNew?'✅ Apuntar a mi familia':'✏️ Editar familia',choripan:isNew?'🌭 Pedir choripanes':'✏️ Cambiar pedido',alergias:isNew?'⚠️ Añadir alergia o intolerancia':'✏️ Editar alergia'};
+    const titles={asistentes:isNew?'✅ Apuntar a mi familia':'✏️ Editar familia',puestos:isNew?'🏠 Apuntar un puesto':'✏️ Editar puesto',choripan:isNew?'🌭 Pedir choripanes':'✏️ Cambiar pedido',alergias:isNew?'⚠️ Añadir alergia o intolerancia':'✏️ Editar alergia'};
     f.append(el('h3',null,titles[list]||(isNew?'🙋 Apuntarme a ':'✏️ Editar · ')+(COMS[list]||'')));
-    const lab=el('label','fld'); lab.append(el('span',null,list==='alergias'?'Ingrediente o alérgeno':list==='asistentes'||list==='choripan'?'Nombres de la familia':'Tu nombre'));
+    const lab=el('label','fld'); lab.append(el('span',null,list==='alergias'?'Ingrediente o alérgeno':list==='puestos'?'Familia o familias que lo montan':list==='asistentes'||list==='choripan'?'Nombres de la familia':'Tu nombre'));
     const inp=el('input'); inp.name='name'; inp.required=true; inp.maxLength=160; inp.autocomplete='off';
-    inp.placeholder=list==='alergias'?'Ej.: Frutos secos':list==='asistentes'||list==='choripan'?'Ej.: Luna, Jesús y Dani':'Ej.: Marta'; const famList=list==='asistentes'||list==='choripan'; inp.value=entry?entry.name:(list==='alergias'?'':famList?(LS('h26-fam')||''):(LS('h26-me')||'')); if(list==='alergias')inp.maxLength=60;
+    inp.placeholder=list==='alergias'?'Ej.: Frutos secos':list==='puestos'?'Ej.: Luna, Jesús y Dani + Marc y Ona':list==='asistentes'||list==='choripan'?'Ej.: Luna, Jesús y Dani':'Ej.: Marta'; const famList=list==='asistentes'||list==='choripan'||list==='puestos'; inp.value=entry?entry.name:(list==='alergias'?'':famList?(LS('h26-fam')||''):(LS('h26-me')||'')); if(list==='alergias')inp.maxLength=60;
     lab.append(inp); f.append(lab);
     if(list==='alergias') f.append(el('p','paid-note','🔒 Escribe solo el ingrediente o alérgeno, sin nombres de niños ni de familias.'));
+    let det=null;
+    if(list==='puestos'){
+      const dl=el('label','fld'); dl.append(el('span',null,'¿Qué puesto? (opcional)'));
+      det=el('input'); det.name='detail'; det.maxLength=160; det.autocomplete='off'; det.placeholder='Ej.: Casita encantada con fruta'; det.value=entry?(entry.detail||''):'';
+      dl.append(det); f.append(dl);
+    }
     const hp=el('input'); hp.name='website'; hp.tabIndex=-1; hp.autocomplete='off'; hp.className='hp'; hp.setAttribute('aria-hidden','true'); f.append(hp);
     let sum=null;
     if(list==='choripan'){
@@ -1233,7 +1282,7 @@ footer .heart{font-family:"Grandstander";font-size:1.6rem;color:var(--marigold);
     const cancel=el('button','btn ghost','Cancelar'); cancel.type='button'; cancel.onclick=()=>dlg.close();
     act.append(save,cancel);
     if(!isNew&&!(list==='choripan'&&paidOf(entry))){
-      const del=el('button','btn danger',list==='asistentes'?'Quitar de la lista':list==='choripan'?'Quitar pedido':list==='alergias'?'Quitar':'Quitarme');del.type='button';
+      const del=el('button','btn danger',list==='asistentes'?'Quitar de la lista':list==='choripan'?'Quitar pedido':list==='puestos'?'Quitar puesto':list==='alergias'?'Quitar':'Quitarme');del.type='button';
       let armed=false; const delTxt=del.textContent; del.onclick=async()=>{
         if(!armed){armed=true;del.textContent='¿Seguro? Toca otra vez';setTimeout(()=>{armed=false;del.textContent=delTxt;},4000);return;}
         try{busy(true);await call('DELETE','/entries/'+entry.id);mine.delete(entry.id);saveMine();dlg.close();toast('Quitado de la lista.');await load();}catch(e){err.textContent=e.message;}finally{busy(false);}
@@ -1245,14 +1294,16 @@ footer .heart{font-family:"Grandstander";font-size:1.6rem;color:var(--marigold);
     f.onsubmit=async ev=>{
       ev.preventDefault(); err.textContent='';
       const body={list,name:inp.value,website:hp.value};
+      if(det) body.detail=det.value;
       if(list==='choripan'){TYPES.forEach(([k])=>body[k]=Math.max(entry?(entry['paid_'+k]||0):0,+f.elements[k].value||0));
         if(!TYPES.some(([k])=>body[k])){err.textContent='Indica al menos un choripán.';return;}}
       try{
         busy(true);
         const d=isNew?await call('POST','/entries',body):await call('PATCH','/entries/'+entry.id,body);
         mine.add(d.entry.id); saveMine();
-        if(list==='asistentes'||list==='choripan') LS('h26-fam',d.entry.name); else if(list!=='alergias') LS('h26-me',d.entry.name);
+        if(list==='asistentes'||list==='choripan') LS('h26-fam',d.entry.name); else if(list!=='alergias'&&list!=='puestos') LS('h26-me',d.entry.name);
         if(list==='asistentes'){LS('h26-asis','yes');hideBanner();}
+        if(list==='puestos'){LS('h26-pue','yes');hidePue();}
         dlg.close(); toast(isNew?(list==='alergias'?'Añadido a la lista ✓':'¡Apuntado! 🎃'):'Cambios guardados ✓'); await load();
       }catch(e){err.textContent=e.message;}finally{busy(false);}
     };
@@ -1284,6 +1335,27 @@ footer .heart{font-family:"Grandstander";font-size:1.6rem;color:var(--marigold);
     const t=document.getElementById('asistentes');t.scrollIntoView({behavior:'smooth'});setTimeout(()=>document.getElementById('asis-q').focus({preventScroll:true}),700);};
   ban.querySelector('[data-b="yes"]').onclick=()=>{LS('h26-asis','yes');hideBanner();toast('¡Genial! Nos vemos el 31 🎃');};
   ban.querySelector('[data-b="x"]').onclick=()=>{SS('h26-ban-x','1');hideBanner();};
+
+  // ---------- banner de puestos ----------
+  // Una vez por visita (máx. 3 visitas), solo si no sale el de asistencia y la familia no tiene puesto.
+  const pue=document.getElementById('pue-banner'); let pueT;
+  function hidePue(){pue.classList.remove('show');clearTimeout(pueT);}
+  function hasPuesto(){
+    if(byList('puestos').some(e=>mine.has(e.id))) return true;
+    const fam=(LS('h26-fam')||'').toLowerCase().trim();
+    return !!fam&&byList('puestos').some(e=>e.name.toLowerCase().includes(fam));
+  }
+  function maybePue(){
+    if(ban.dataset.done||pue.dataset.done||LS('h26-pue')||SS('h26-pue-x')||hasPuesto()) return;
+    const n=+(LS('h26-pue-n')||0); if(n>=3) return;
+    pue.dataset.done='1'; LS('h26-pue-n',String(n+1)); SS('h26-pue-x','1');
+    setTimeout(()=>{pue.classList.add('show');pueT=setTimeout(hidePue,20000);},4000);
+  }
+  pue.addEventListener('pointerenter',()=>clearTimeout(pueT)); pue.addEventListener('focusin',()=>clearTimeout(pueT));
+  pue.querySelector('[data-b="add"]').onclick=()=>{hidePue();document.getElementById('puestos').scrollIntoView({behavior:'smooth'});setTimeout(()=>openForm('puestos'),600);};
+  pue.querySelector('[data-b="later"]').onclick=hidePue;
+  pue.querySelector('[data-b="x"]').onclick=hidePue;
+  pue.querySelector('[data-b="no"]').onclick=()=>{LS('h26-pue','no');hidePue();toast('¡Vale! Venid a disfrutar igualmente 💚');};
 
   // ---------- botones ----------
   document.querySelectorAll('[data-add]').forEach(b=>b.addEventListener('click',()=>{
@@ -1411,7 +1483,8 @@ footer .heart{font-family:"Grandstander";font-size:1.6rem;color:var(--marigold);
     '✅ Apuntar a la familia en «¿Quién viene?»',
     '🙋 Apuntarse a alguna comisión (opcional)',
     '🎁 Algo para la cajita de Tierra (si quieres)',
-    '🔦 Linterna para moverse por el cole de noche'
+    '🔦 Linterna para moverse por el cole de noche',
+    '🏠 Si haces puesto: apuntarlo en la web'
   ];
   const KEY='tierra-halloween-2026-check';
   let state={};

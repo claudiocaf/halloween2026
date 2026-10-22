@@ -6,7 +6,7 @@
 // Opcional: variable EDIT_CODE. Si existe, para modificar hay que conocer ese código
 // (una palabra que se comparte en el grupo de WhatsApp, para evitar spam de bots).
 
-const LISTS = ['asistentes', 'choripan', 'paseo', 'disco', 'cena', 'altar', 'limpieza', 'alergias'];
+const LISTS = ['asistentes', 'choripan', 'puestos', 'paseo', 'disco', 'cena', 'altar', 'limpieza', 'alergias'];
 const QTY = ['normal', 'normal_sg', 'veg', 'veg_sg'];
 const MAX_NAME = 160;
 const MAX_QTY = 40;
@@ -23,16 +23,18 @@ function cleanName(v) {
   if (typeof v !== 'string') return '';
   return v.replace(/[\u0000-\u001f\u007f⁠​]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, MAX_NAME);
 }
+// Texto extra de un puesto («qué puesto»): solo se guarda en la lista de puestos
+const cleanDetail = (list, v) => (list === 'puestos' ? cleanName(v) : '');
 function cleanQty(v) {
   const n = Math.floor(Number(v));
   if (!Number.isFinite(n) || n < 0) return 0;
   return Math.min(n, MAX_QTY);
 }
-const PRICES = { normal: 2, normal_sg: 3, veg: 3, veg_sg: 4 };
+const PRICES = { normal: 3, normal_sg: 4, veg: 4, veg_sg: 4 };
 const paidKey = k => 'paid_' + k;
 function rowOut(r) {
   return {
-    id: r.id, list: r.list, name: r.name,
+    id: r.id, list: r.list, name: r.name, detail: r.detail || '',
     normal: r.normal, normal_sg: r.normal_sg, veg: r.veg, veg_sg: r.veg_sg,
     paid_normal: r.paid_normal || 0, paid_normal_sg: r.paid_normal_sg || 0, paid_veg: r.paid_veg || 0, paid_veg_sg: r.paid_veg_sg || 0,
     locked: r.locked ? 1 : 0,
@@ -48,6 +50,7 @@ async function ensureSchema(env) {
   const cols = (await env.DB.prepare('PRAGMA table_info(entries)').all()).results.map(c => c.name);
   const add = [...QTY.map(paidKey), 'locked'].filter(c => !cols.includes(c));
   for (const c of add) await env.DB.prepare(`ALTER TABLE entries ADD COLUMN ${c} INTEGER NOT NULL DEFAULT 0`).run();
+  if (!cols.includes('detail')) await env.DB.prepare("ALTER TABLE entries ADD COLUMN detail TEXT NOT NULL DEFAULT ''").run();
   await env.DB.prepare('CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT)').run();
   schemaReady = true;
 }
@@ -149,12 +152,12 @@ async function handleApi(request, env, url) {
   if (method === 'GET' && path === '/api/export.csv') {
     const { results } = await env.DB.prepare('SELECT * FROM entries ORDER BY list, id').all();
     const esc = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
-    const lines = [['lista', 'nombre', 'normal', 'normal_sin_gluten', 'vegetariano', 'vegetariano_sin_gluten', 'total_eur', 'pagado_eur', 'falta_eur', 'actualizado'].join(',')];
+    const lines = [['lista', 'nombre', 'detalle', 'normal', 'normal_sin_gluten', 'vegetariano', 'vegetariano_sin_gluten', 'total_eur', 'pagado_eur', 'falta_eur', 'actualizado'].join(',')];
     for (const r of results) {
       const isC = r.list === 'choripan';
       const tot = isC ? QTY.reduce((s, k) => s + r[k] * PRICES[k], 0) : '';
       const paid = isC ? QTY.reduce((s, k) => s + (r[paidKey(k)] || 0) * PRICES[k], 0) : '';
-      lines.push([r.list, r.name, r.normal, r.normal_sg, r.veg, r.veg_sg, tot, paid, isC ? tot - paid : '', r.updated_at].map(esc).join(','));
+      lines.push([r.list, r.name, r.detail || '', r.normal, r.normal_sg, r.veg, r.veg_sg, tot, paid, isC ? tot - paid : '', r.updated_at].map(esc).join(','));
     }
     return new Response('﻿' + lines.join('\n'), {
       headers: { 'content-type': 'text/csv; charset=utf-8', 'content-disposition': 'attachment; filename="halloween2026.csv"', 'cache-control': 'no-store' },
@@ -188,8 +191,8 @@ async function handleApi(request, env, url) {
     const dup = await env.DB.prepare('SELECT id FROM entries WHERE list = ? AND lower(name) = lower(?)').bind(list, name).first();
     if (dup) return bad(list === 'alergias' ? 'Ese alérgeno ya está en la lista 👍' : 'Ese nombre ya está en la lista. Puedes editarlo desde allí.', 409, { id: dup.id });
     const r = await env.DB.prepare(
-      "INSERT INTO entries (list, name, normal, normal_sg, veg, veg_sg) VALUES (?, ?, ?, ?, ?, ?) RETURNING *"
-    ).bind(list, name, q.normal, q.normal_sg, q.veg, q.veg_sg).first();
+      "INSERT INTO entries (list, name, detail, normal, normal_sg, veg, veg_sg) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING *"
+    ).bind(list, name, cleanDetail(list, b.detail), q.normal, q.normal_sg, q.veg, q.veg_sg).first();
     await log(env, 'add', list, r.id, name, null, rowOut(r));
     return json({ ok: true, entry: rowOut(r) }, 201);
   }
@@ -205,14 +208,15 @@ async function handleApi(request, env, url) {
     if (before.list === 'alergias') name = name.slice(0, 60).replace(/^./, c => c.toUpperCase());
     if (!name) return bad('Escribe un nombre.');
     const q = Object.fromEntries(QTY.map(k => [k, before.list === 'choripan' && b[k] !== undefined ? cleanQty(b[k]) : before[k]]));
+    const detail = b.detail !== undefined ? cleanDetail(before.list, b.detail) : (before.detail || '');
     if (before.list === 'choripan') {
       const c = await choriClosed(before); if (c) return bad(c, 423);
       const low = QTY.filter(k => q[k] < (before[paidKey(k)] || 0));
       if (low.length) return bad('Ya habéis pagado parte del pedido: no se pueden quitar choripanes pagados, solo añadir más.', 409);
     }
     const r = await env.DB.prepare(
-      "UPDATE entries SET name = ?, normal = ?, normal_sg = ?, veg = ?, veg_sg = ?, updated_at = datetime('now') WHERE id = ? RETURNING *"
-    ).bind(name, q.normal, q.normal_sg, q.veg, q.veg_sg, id).first();
+      "UPDATE entries SET name = ?, detail = ?, normal = ?, normal_sg = ?, veg = ?, veg_sg = ?, updated_at = datetime('now') WHERE id = ? RETURNING *"
+    ).bind(name, detail, q.normal, q.normal_sg, q.veg, q.veg_sg, id).first();
     await log(env, 'edit', before.list, id, name, rowOut(before), rowOut(r));
     return json({ ok: true, entry: rowOut(r) });
   }
@@ -239,8 +243,8 @@ async function handleApi(request, env, url) {
     const exists = await env.DB.prepare('SELECT id FROM entries WHERE list = ? AND lower(name) = lower(?)').bind(e.list, e.name).first();
     if (exists) return bad('Ya hay una entrada con ese nombre en la lista.', 409);
     const r = await env.DB.prepare(
-      "INSERT INTO entries (list, name, normal, normal_sg, veg, veg_sg) VALUES (?, ?, ?, ?, ?, ?) RETURNING *"
-    ).bind(e.list, e.name, e.normal || 0, e.normal_sg || 0, e.veg || 0, e.veg_sg || 0).first();
+      "INSERT INTO entries (list, name, detail, normal, normal_sg, veg, veg_sg) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING *"
+    ).bind(e.list, e.name, e.detail || '', e.normal || 0, e.normal_sg || 0, e.veg || 0, e.veg_sg || 0).first();
     await log(env, 'restore', e.list, r.id, e.name, null, rowOut(r));
     return json({ ok: true, entry: rowOut(r) });
   }
