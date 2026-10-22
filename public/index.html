@@ -312,6 +312,12 @@ main,.hero .wrap,footer .wrap,.picado{position:relative;z-index:2}
 .ab-act{grid-column:2;display:flex;flex-wrap:wrap;gap:8px}
 .ab-x{grid-column:3;grid-row:1;align-self:start;border:0;background:none;font-size:1rem;cursor:pointer;color:var(--muted);padding:2px 4px}
 @media (min-width:820px){.asis-banner{bottom:20px}}
+.asis-banner.top{top:72px;bottom:auto;transform:translate(-50%,-24px);width:min(640px,calc(100vw - 24px));padding:16px 18px;border:3px solid var(--orange);box-shadow:0 0 0 4px rgba(255,138,31,.25),var(--shadow)}
+.asis-banner.top.show{transform:translate(-50%,0)}
+.asis-banner.top p{font-size:1.05rem;line-height:1.4}
+.asis-banner.top .ab-ic{font-size:2.4rem}
+@media (min-width:820px){.asis-banner.top{bottom:auto}}
+@media (max-width:640px){.asis-banner.top{grid-template-columns:1fr auto;padding:14px}.asis-banner.top .ab-ic{display:none}.asis-banner.top p{grid-column:1;font-size:1rem}.asis-banner.top .ab-act{grid-column:1/-1;gap:6px}.asis-banner.top .ab-x{grid-column:2}}
 .toast{position:fixed;left:50%;top:76px;transform:translate(-50%,-10px);z-index:60;background:var(--night-2);color:var(--cream);border:2px solid rgba(255,246,232,.6);border-radius:14px;padding:10px 16px;font-weight:800;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;max-width:calc(100vw - 32px);text-align:center}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 .db-off-note{display:none}
@@ -941,7 +947,7 @@ footer .heart{font-family:"Grandstander";font-size:1.6rem;color:var(--marigold);
   <label class="fld"><span>Código</span><input autocomplete="off" required></label>
   <div class="f-act"><button class="btn" type="submit">Continuar</button><button class="btn ghost" type="button" data-cancel>Cancelar</button></div>
 </form></dialog>
-<div id="pue-banner" class="asis-banner" role="region" aria-label="Aviso de puestos">
+<div id="pue-banner" class="asis-banner top" role="region" aria-label="Aviso de puestos">
   <span class="ab-ic">🏮</span>
   <p><b>¿Montáis un puesto?</b> La fiesta es para los peques y los puestos son el corazón del truco o trato. No es obligatorio, pero os animamos mucho (¡también se puede compartir con otra familia!).</p>
   <div class="ab-act">
@@ -1349,7 +1355,7 @@ footer .heart{font-family:"Grandstander";font-size:1.6rem;color:var(--marigold);
     if(ban.dataset.done||pue.dataset.done||LS('h26-pue')||SS('h26-pue-x')||hasPuesto()) return;
     const n=+(LS('h26-pue-n')||0); if(n>=3) return;
     pue.dataset.done='1'; LS('h26-pue-n',String(n+1)); SS('h26-pue-x','1');
-    setTimeout(()=>{pue.classList.add('show');pueT=setTimeout(hidePue,20000);},4000);
+    setTimeout(()=>{pue.classList.add('show');pueT=setTimeout(hidePue,20000);},800);
   }
   pue.addEventListener('pointerenter',()=>clearTimeout(pueT)); pue.addEventListener('focusin',()=>clearTimeout(pueT));
   pue.querySelector('[data-b="add"]').onclick=()=>{hidePue();document.getElementById('puestos').scrollIntoView({behavior:'smooth'});setTimeout(()=>openForm('puestos'),600);};
