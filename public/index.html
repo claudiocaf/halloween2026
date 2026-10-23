@@ -352,11 +352,17 @@ body.db-off [data-add]{opacity:.5;pointer-events:none}
 .otable tbody tr{cursor:pointer;outline:none}
 .otable tbody tr:hover td,.otable tbody tr:focus-visible td{background:#fff3e0}
 .otable tbody tr.mine td{background:#ffe9cc}
+.otable tbody tr.paid td{background:#dff5e6}
+.otable tbody tr.part td{background:#fff3cd}
+.tag.t-paid{background:#1f7a3a}
+.tag.t-part{background:#c98a00}
 @media (max-width:640px){
   .otable thead{display:none}
   .otable,.otable tbody{display:block}
   .otable tbody tr{display:grid;grid-template-columns:repeat(5,1fr) 28px;gap:6px;background:#f7f2ff;border-radius:16px;padding:12px;margin-bottom:8px}
   .otable tbody tr.mine{background:#ffe9cc}
+  .otable tbody tr.paid{background:#dff5e6}
+  .otable tbody tr.part{background:#fff3cd}
   .otable td{background:none!important;padding:0;border-radius:0!important}
   .otable td.o-name{grid-column:1/-1;font-size:1.05rem;padding:0 0 6px}
   .otable td.o-n,.otable td.o-eur{width:auto;background:#fff!important;border-radius:10px!important;padding:6px 2px;font-size:1rem}
@@ -1225,10 +1231,10 @@ footer .heart{font-family:"Grandstander";font-size:1.6rem;color:var(--marigold);
     hd.append(el('th','o-name','Familia'));TYPES.forEach(([k,ic,txt])=>{const th=el('th','o-n',ic);th.title=txt;hd.append(th);});hd.append(el('th','o-n','€'),el('th','o-ed',''));
     const thead=el('thead');thead.append(hd);tb.append(thead);const tbody=el('tbody');
     shown.forEach(e=>{
-      const tr=el('tr',mine.has(e.id)?'mine':'');tr.tabIndex=0;tr.setAttribute('role','button');tr.setAttribute('aria-label','Editar pedido de '+e.name);
+      const t=qtot(e), pd=paidOf(e), pst=t&&pd>=t?'paid':pd?'part':'';
+      const tr=el('tr',[mine.has(e.id)?'mine':'',pst].join(' ').trim());tr.tabIndex=0;tr.setAttribute('role','button');tr.setAttribute('aria-label','Editar pedido de '+e.name);
       const go=()=>openForm('choripan',e);tr.onclick=go;tr.onkeydown=ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();go();}};
-      const nm=el('td','o-name');nm.append(el('span',null,e.name));if(mine.has(e.id))nm.append(el('span','tag','vosotros'));if(e.locked||choriLocked){const lk=el('span','lk','🔒');lk.title='Pedido cerrado';nm.append(lk);}tr.append(nm);
-      const t=qtot(e);
+      const nm=el('td','o-name');nm.append(el('span',null,e.name));if(mine.has(e.id))nm.append(el('span','tag','vosotros'));if(pst)nm.append(el('span','tag t-'+pst,pst==='paid'?'✓ Pagado':'Pagado en parte'));if(e.locked||choriLocked){const lk=el('span','lk','🔒');lk.title='Pedido cerrado';nm.append(lk);}tr.append(nm);
       TYPES.forEach(([k,ic,txt])=>{const td=el('td','o-n'+(e[k]?' has':''));td.setAttribute('data-l',ic);td.textContent=e[k]||'–';td.title=txt;tr.append(td);});
       const eu=el('td','o-n o-eur');eu.setAttribute('data-l','€');eu.textContent=t?money(e)+' €':'¿cuántos?';if(!t)eu.classList.add('o-warn');tr.append(eu);
       tr.append(el('td','o-ed','✏️'));tbody.append(tr);
