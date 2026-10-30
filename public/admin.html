@@ -93,7 +93,15 @@ html{scroll-behavior:smooth}
 .cu-grid .sim-in input[type=text]{border:0;border-radius:0;padding:9px 0;background:transparent;font-weight:800}
 .cu-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:14px}
 .cu-msg{font-weight:800;font-size:.9rem}
-.a-cuentas{color:#2d6fb3;font-weight:800}
+.a-cuentas{color:#2d6fb3;font-weight:800}.a-ticket_add{color:#1f7a3a;font-weight:800}.a-ticket_del{color:#b3261e;font-weight:800}
+.tk-up{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.tk-up select{border:2px solid var(--line);border-radius:12px;padding:9px 12px;background:#fff;color:var(--ink);font:700 .95rem system-ui,sans-serif}
+.tk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-top:12px}
+.tk{background:#f7f2ff;border-radius:14px;padding:8px;display:grid;gap:4px;align-content:start}
+.tk a{display:block;aspect-ratio:3/4;border-radius:10px;overflow:hidden;background:#fff;border:2px solid var(--line)}
+.tk img{width:100%;height:100%;object-fit:contain;display:block}
+.tk b{font-size:.85rem}.tk small{color:var(--muted);font-size:.75rem}
+.tk button{border:2px solid var(--line);background:#fff;border-radius:999px;padding:3px 8px;font-weight:800;font-size:.75rem;cursor:pointer;color:#b3261e}
 @media (max-width:640px){.cu-grid{grid-template-columns:1fr 120px}.cu-grid .cu-hd.nt{display:none}.cu-grid .cu-note{grid-column:1/-1;margin-bottom:6px}}
 .sim-h{font-size:1rem;margin:16px 0 6px}
 .sim-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:6px 0}
@@ -159,6 +167,15 @@ html{scroll-behavior:smooth}
       <span class="cu-msg muted" id="cu-msg"></span>
     </div>
     <div class="sim-sum" id="cu-sum"></div>
+    <h3 class="sim-h">📷 Fotos de tickets</h3>
+    <p class="muted" style="margin:0 0 8px;font-size:.85rem">Solo las ves tú en el admin. Se reducen automáticamente antes de subirlas.</p>
+    <div class="tk-up">
+      <select id="tk-concept" aria-label="Concepto del ticket"></select>
+      <button type="button" class="btn" id="tk-btn">📷 Subir foto</button>
+      <input type="file" id="tk-file" accept="image/*" multiple hidden>
+      <span class="cu-msg muted" id="tk-msg"></span>
+    </div>
+    <div class="tk-grid" id="tk-grid"></div>
   </div>
 
   <nav class="qnav" id="qnav" aria-label="Secciones">
@@ -213,7 +230,7 @@ html{scroll-behavior:smooth}
   const LS=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v);}catch(e){return null;}};
   const LISTS={asistentes:'✅ Asistentes',choripan:'🌭 Choripán',puestos:'🏠 Puestos',paseo:'🌳 Paseo',disco:'🪩 Disco',cena:'🍽️ Cena',altar:'🕯️ Altar',limpieza:'🧹 Limpieza',alergias:'⚠️ Alergias'};
   const TYPES=[['normal','🌭',3],['normal_sg','🌭🚫',4],['veg','🌱',4],['veg_sg','🌱🚫',4]];
-  const VERB={add:'añadió',edit:'cambió',delete:'quitó',restore:'recuperó',pay:'💶 marcó pagado',unpay:'anuló el pago de',lock:'🔒 bloqueó',unlock:'🔓 desbloqueó',lock_all:'🔒',unlock_all:'🔓',cuentas:'🧾 actualizó'};
+  const VERB={add:'añadió',edit:'cambió',delete:'quitó',restore:'recuperó',pay:'💶 marcó pagado',unpay:'anuló el pago de',lock:'🔒 bloqueó',unlock:'🔓 desbloqueó',lock_all:'🔒',unlock_all:'🔓',cuentas:'🧾 actualizó',ticket_add:'📷 subió una foto de ticket:',ticket_del:'🗑️ quitó una foto de ticket:'};
   let entries=[], tab='asistentes';
   const el=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e;};
   const fmt=s=>s?new Date(s.replace(' ','T')+'Z').toLocaleString('es-ES',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',timeZone:'Europe/Madrid'}):'';
@@ -349,6 +366,53 @@ html{scroll-behavior:smooth}
       m.dataset.ok='✓ Guardado';cuCalc();setTimeout(()=>{delete m.dataset.ok;cuCalc();},3000);
       await loadLog();
     }catch(e){alert(e.message);}finally{b.disabled=false;}
+  };
+
+  // ---------- fotos de tickets ----------
+  let tickets=[]; const tkUrl=new Map();
+  const tkSel=document.getElementById('tk-concept');
+  CU.forEach(([k,t])=>{const o=document.createElement('option');o.value=k;o.textContent=t;tkSel.append(o);});
+  async function tkBlob(id){
+    if(tkUrl.has(id))return tkUrl.get(id);
+    const r=await fetch('/api/tickets/'+id+'/img',{headers:hdr()});if(!r.ok)throw new Error('Error');
+    const u=URL.createObjectURL(await r.blob());tkUrl.set(id,u);return u;
+  }
+  function renderTickets(){
+    const g=document.getElementById('tk-grid');g.innerHTML='';
+    if(!tickets.length){g.append(el('p','muted','Aún no hay fotos.'));return;}
+    tickets.forEach(t=>{
+      const c=el('div','tk'),a=el('a'),img=el('img');a.target='_blank';a.rel='noopener';a.title='Ver en grande';a.append(img);
+      const lb=(CU.find(([k])=>k===t.concept)||[0,t.concept])[1];
+      const del=el('button',null,'🗑️ Quitar');del.type='button';
+      del.onclick=async()=>{if(!confirm('¿Quitar esta foto de «'+lb+'»? No se puede recuperar.'))return;
+        try{await api('/admin/tickets/'+t.id+'/delete',{method:'POST'});tkUrl.delete(t.id);await loadTickets();await loadLog();}catch(e){alert(e.message);}};
+      c.append(a,el('b',null,lb),el('small',null,fmt(t.created_at)),del);g.append(c);
+      tkBlob(t.id).then(u=>{img.src=u;a.href=u;}).catch(()=>{img.alt='No se pudo cargar';});
+    });
+  }
+  async function loadTickets(){try{tickets=(await api('/tickets')).tickets||[];}catch(e){tickets=[];}renderTickets();}
+  async function tkCompress(file){
+    const url=URL.createObjectURL(file);
+    const img=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=()=>rej(new Error('No se puede leer «'+file.name+'» como imagen.'));i.src=url;});
+    const sc=Math.min(1,2200/Math.max(img.naturalWidth,img.naturalHeight)),c=document.createElement('canvas');
+    c.width=Math.round(img.naturalWidth*sc);c.height=Math.round(img.naturalHeight*sc);
+    const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(url);
+    let q=.82,d=c.toDataURL('image/jpeg',q);while(d.length>1300000&&q>.4){q-=.1;d=c.toDataURL('image/jpeg',q);}
+    return d;
+  }
+  document.getElementById('tk-btn').onclick=()=>document.getElementById('tk-file').click();
+  document.getElementById('tk-file').onchange=async ev=>{
+    const files=[...ev.target.files],m=document.getElementById('tk-msg'),b=document.getElementById('tk-btn');ev.target.value='';
+    if(!files.length)return;b.disabled=true;let ok=0;
+    try{
+      for(const [i,f] of files.entries()){
+        m.textContent='Subiendo '+(i+1)+' de '+files.length+'…';m.className='cu-msg muted';
+        const data=await tkCompress(f);
+        await api('/admin/tickets',{method:'POST',body:JSON.stringify({concept:tkSel.value,name:f.name,data})});ok++;
+      }
+      m.textContent='✓ '+ok+(ok===1?' foto subida':' fotos subidas');m.className='cu-msg pos';
+    }catch(e){m.textContent=e.message+(ok?' ('+ok+' subidas antes del fallo)':'');m.className='cu-msg neg';}
+    finally{b.disabled=false;await loadTickets();await loadLog();}
   };
 
   function tabs(){
@@ -546,7 +610,7 @@ html{scroll-behavior:smooth}
       const ad=await api('/admin');hasKey=ad.has_key!==false;
       const d=await api('/data');entries=d.entries||[];choriLocked=!!d.chori_locked;
       let cu=null;try{cu=await api('/cuentas');}catch(e){}
-      kpis();compra();simCalc();renderCuentas(cu);renderPay();renderFam();tabs();table();await loadLog();
+      kpis();compra();simCalc();renderCuentas(cu);loadTickets();renderPay();renderFam();tabs();table();await loadLog();
       document.getElementById('csv').href='/api/export.csv'+(key()?'?key='+encodeURIComponent(key()):'');
     }catch(e){showErr(e.message);}
   }

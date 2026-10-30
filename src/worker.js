@@ -13,6 +13,10 @@ const MAX_QTY = 40;
 // Cuentas reales de la fiesta (solo admin): lo que se ha pagado de verdad por cada concepto
 const CUENTAS = ['pan', 'pan_sg', 'chorizos', 'chorizos_sg', 'lena', 'varias'];
 const MAX_NOTE = 300;
+const CUENTAS_LBL = { pan: 'Pan', pan_sg: 'Pan sin gluten', chorizos: 'Chorizos', chorizos_sg: 'Chorizos sin gluten', lena: 'Leña', varias: 'Varias' };
+// Fotos de tickets: se guardan ya reducidas (base64) en la base de datos, solo visibles para el admin
+const MAX_TICKET = 1400000;
+const MAX_TICKETS = 60;
 
 const json = (data, status = 200) =>
   new Response(JSON.stringify(data), {
@@ -55,6 +59,7 @@ async function ensureSchema(env) {
   for (const c of add) await env.DB.prepare(`ALTER TABLE entries ADD COLUMN ${c} INTEGER NOT NULL DEFAULT 0`).run();
   if (!cols.includes('detail')) await env.DB.prepare("ALTER TABLE entries ADD COLUMN detail TEXT NOT NULL DEFAULT ''").run();
   await env.DB.prepare('CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT)').run();
+  await env.DB.prepare("CREATE TABLE IF NOT EXISTS tickets (id INTEGER PRIMARY KEY AUTOINCREMENT, concept TEXT NOT NULL, name TEXT NOT NULL DEFAULT '', mime TEXT NOT NULL, data TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT (datetime('now')))").run();
   schemaReady = true;
 }
 async function getSetting(env, key) {
@@ -133,11 +138,23 @@ async function handleApi(request, env, url) {
   }
 
   // ---- Zona admin (historial, descarga, deshacer) ----
-  if (path === '/api/log' || path === '/api/cuentas' || path === '/api/export.csv' || /^\/api\/log\/\d+\/restore$/.test(path) || path === '/api/admin' || path.startsWith('/api/admin/')) {
+  if (path === '/api/log' || path === '/api/cuentas' || path === '/api/tickets' || /^\/api\/tickets\/\d+\/img$/.test(path) || path === '/api/export.csv' || /^\/api\/log\/\d+\/restore$/.test(path) || path === '/api/admin' || path.startsWith('/api/admin/')) {
     if (!isAdmin(request, env, url)) return bad('Clave de administración incorrecta.', 403, { need_admin: true });
   }
   if (method === 'GET' && path === '/api/admin') return json({ ok: true, has_key: !!env.ADMIN_KEY });
   if (method === 'GET' && path === '/api/cuentas') return json(await getCuentas(env));
+  if (method === 'GET' && path === '/api/tickets') {
+    const { results } = await env.DB.prepare('SELECT id, concept, name, mime, length(data) AS size, created_at FROM tickets ORDER BY id').all();
+    return json({ tickets: results });
+  }
+  const tImg = path.match(/^\/api\/tickets\/(\d+)\/img$/);
+  if (method === 'GET' && tImg) {
+    const t = await env.DB.prepare('SELECT mime, data FROM tickets WHERE id = ?').bind(Number(tImg[1])).first();
+    if (!t) return bad('Foto no encontrada.', 404);
+    const bin = atob(t.data), bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return new Response(bytes, { headers: { 'content-type': t.mime, 'cache-control': 'private, max-age=3600' } });
+  }
 
   // ---- Pagos y bloqueo de choripán (solo con ADMIN_KEY configurada) ----
   if (path.startsWith('/api/admin/')) {
@@ -149,6 +166,27 @@ async function handleApi(request, env, url) {
       await setSetting(env, 'chori_locked', v);
       await log(env, v === '1' ? 'lock_all' : 'unlock_all', 'choripan', null, v === '1' ? 'Pedidos de choripán cerrados' : 'Pedidos de choripán abiertos', null, null);
       return json({ ok: true, chori_locked: v === '1' });
+    }
+    if (path === '/api/admin/tickets') {
+      const concept = String(b.concept || '');
+      if (!CUENTAS.includes(concept)) return bad('Concepto no válido.');
+      const m = String(b.data || '').match(/^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/);
+      if (!m) return bad('La imagen no es válida.');
+      if (m[2].length > MAX_TICKET) return bad('La foto es demasiado grande. Prueba con otra más pequeña.', 413);
+      const n = (await env.DB.prepare('SELECT COUNT(*) AS n FROM tickets').first()).n;
+      if (n >= MAX_TICKETS) return bad('Ya hay ' + MAX_TICKETS + ' fotos: borra alguna antes de subir más.', 409);
+      const t = await env.DB.prepare('INSERT INTO tickets (concept, name, mime, data) VALUES (?, ?, ?, ?) RETURNING id, concept, name, mime, length(data) AS size, created_at')
+        .bind(concept, cleanName(b.name).slice(0, 80), m[1], m[2]).first();
+      await log(env, 'ticket_add', 'cuentas', t.id, CUENTAS_LBL[concept], null, { concept });
+      return json({ ok: true, ticket: t }, 201);
+    }
+    const tDel = path.match(/^\/api\/admin\/tickets\/(\d+)\/delete$/);
+    if (tDel) {
+      const t = await env.DB.prepare('SELECT id, concept FROM tickets WHERE id = ?').bind(Number(tDel[1])).first();
+      if (!t) return json({ ok: true });
+      await env.DB.prepare('DELETE FROM tickets WHERE id = ?').bind(t.id).run();
+      await log(env, 'ticket_del', 'cuentas', t.id, CUENTAS_LBL[t.concept], { concept: t.concept }, null);
+      return json({ ok: true });
     }
     if (path === '/api/admin/cuentas') {
       const before = await getCuentas(env);
