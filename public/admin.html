@@ -311,7 +311,7 @@ html{scroll-behavior:smooth}
   simInit();
 
   // ---------- cuentas reales ----------
-  const CU=[['pan','🥖 Pan'],['pan_sg','🥖🚫 Pan sin gluten'],['chorizos','🌭 Chorizos'],['chorizos_sg','🌭🚫 Chorizos sin gluten'],['lena','🪵 Leña'],['varias','🧾 Varias']];
+  const CU=[['pan','🥖 Pan'],['pan_sg','🥖🚫 Pan sin gluten'],['chorizos','🌭 Chorizos'],['chorizos_veg','🌱 Chorizos vegetales'],['chorizos_veg_sg','🌱🚫 Chorizos vegetales sin gluten'],['lena','🪵 Leña'],['varias','🧾 Varias']];
   let cuSaved=null, cuWork=null, cuInit=false;
   const cuNum=v=>{const x=parseFloat(String(v).replace(',','.'));return isFinite(x)&&x>0?Math.round(x*100)/100:0;};
   const cuStr=o=>JSON.stringify(CU.map(([k])=>[cuNum(o[k].amount),(o[k].notes||'').trim()]));

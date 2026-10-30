@@ -11,9 +11,9 @@ const QTY = ['normal', 'normal_sg', 'veg', 'veg_sg'];
 const MAX_NAME = 160;
 const MAX_QTY = 40;
 // Cuentas reales de la fiesta (solo admin): lo que se ha pagado de verdad por cada concepto
-const CUENTAS = ['pan', 'pan_sg', 'chorizos', 'chorizos_sg', 'lena', 'varias'];
+const CUENTAS = ['pan', 'pan_sg', 'chorizos', 'chorizos_veg', 'chorizos_veg_sg', 'lena', 'varias'];
 const MAX_NOTE = 300;
-const CUENTAS_LBL = { pan: 'Pan', pan_sg: 'Pan sin gluten', chorizos: 'Chorizos', chorizos_sg: 'Chorizos sin gluten', lena: 'Leña', varias: 'Varias' };
+const CUENTAS_LBL = { pan: 'Pan', pan_sg: 'Pan sin gluten', chorizos: 'Chorizos', chorizos_veg: 'Chorizos vegetales', chorizos_veg_sg: 'Chorizos vegetales sin gluten', lena: 'Leña', varias: 'Varias' };
 // Fotos de tickets: se guardan ya reducidas (base64) en la base de datos, solo visibles para el admin
 const MAX_TICKET = 1400000;
 const MAX_TICKETS = 60;
@@ -60,6 +60,7 @@ async function ensureSchema(env) {
   if (!cols.includes('detail')) await env.DB.prepare("ALTER TABLE entries ADD COLUMN detail TEXT NOT NULL DEFAULT ''").run();
   await env.DB.prepare('CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT)').run();
   await env.DB.prepare("CREATE TABLE IF NOT EXISTS tickets (id INTEGER PRIMARY KEY AUTOINCREMENT, concept TEXT NOT NULL, name TEXT NOT NULL DEFAULT '', mime TEXT NOT NULL, data TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT (datetime('now')))").run();
+  await env.DB.prepare("UPDATE tickets SET concept = 'chorizos_veg_sg' WHERE concept = 'chorizos_sg'").run();
   schemaReady = true;
 }
 async function getSetting(env, key) {
@@ -77,6 +78,11 @@ async function getCuentas(env) {
   for (const k of CUENTAS) {
     const it = (raw.items && raw.items[k]) || {};
     items[k] = { amount: Number.isFinite(+it.amount) ? +it.amount : 0, notes: typeof it.notes === 'string' ? it.notes : '' };
+  }
+  // «Chorizos sin gluten» pasó a ser «Chorizos vegetales sin gluten»: se conserva lo que ya estuviera apuntado
+  const old = raw.items && raw.items.chorizos_sg;
+  if (old && !items.chorizos_veg_sg.amount && !items.chorizos_veg_sg.notes && (+old.amount || old.notes)) {
+    items.chorizos_veg_sg = { amount: Number.isFinite(+old.amount) ? +old.amount : 0, notes: typeof old.notes === 'string' ? old.notes : '' };
   }
   return { items, updated_at: raw.updated_at || null };
 }
