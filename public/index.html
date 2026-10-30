@@ -258,6 +258,13 @@ main,.hero .wrap,footer .wrap,.picado{position:relative;z-index:2}
 .row.mine{background:#fff3e0;border-color:#ffd29e}
 .row-name{flex:1 1 auto;min-width:0}
 .row-edit{opacity:.55;font-size:.9rem}
+.cu-items{display:grid;gap:8px;margin-top:14px}
+.cu-it{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 12px;background:#f7f2ff;border-radius:14px;padding:10px 14px;font-weight:800;color:var(--card-ink)}
+.cu-it .cu-n{flex:1 1 auto}.cu-it .cu-a{color:var(--orange-deep);white-space:nowrap}
+.cu-it small{flex-basis:100%;font-weight:600;color:var(--muted)}
+.cu-tk{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-top:8px}
+.cu-tk a{display:grid;gap:4px;text-decoration:none;color:var(--card-ink);font-weight:800;font-size:.8rem;background:#f7f2ff;border-radius:12px;padding:6px}
+.cu-tk img{width:100%;aspect-ratio:3/4;object-fit:contain;background:#fff;border-radius:8px;display:block}
 .row-d{flex-basis:100%;font-weight:600;font-size:.88rem;color:var(--muted)}
 .row-q{flex-basis:100%;display:flex;flex-wrap:wrap;gap:6px}
 .qq{background:#fff;border-radius:999px;padding:2px 10px;font-size:.88rem;color:var(--plum)}
@@ -503,6 +510,7 @@ footer .heart{font-family:"Grandstander";font-size:1.6rem;color:var(--marigold);
       <a href="#alergias" class="alert">⚠️ Alergias</a>
       <a href="#puestos">🍬 Puestos</a>
       <a href="#cena">🌭 Cena</a>
+      <a href="#cuentas" id="nav-cuentas" hidden>💶 Cuentas</a>
       <a href="#comisiones">🙋 Comisiones</a>
       <a href="#normas">🏡 Normas</a>
       <a href="#llevar">🎒 Qué llevar</a>
@@ -786,6 +794,28 @@ footer .heart{font-family:"Grandstander";font-size:1.6rem;color:var(--marigold);
       </div>
       <p class="small" style="margin:0 0 12px">Toca tu pedido para cambiar las cantidades o quitarlo.</p>
       <div id="chori-list"><p class="small">Cargando…</p></div>
+    </div>
+  </section>
+
+  <!-- CUENTAS (visible solo si el admin las publica) -->
+  <section id="cuentas" class="reveal" hidden>
+    <div class="sec-head">
+      <div class="ico" style="background:var(--lime);box-shadow:0 6px 0 #6fae36">💶</div>
+      <div><h2>Cuentas</h2><p>Transparencia total: lo que se ha cobrado y lo que se ha pagado de verdad.</p></div>
+    </div>
+    <div class="card">
+      <div class="stat" style="margin-top:0">
+        <div><b id="cu-paid">–</b>cobrado</div>
+        <div><b id="cu-due">–</b>falta por cobrar</div>
+        <div><b id="cu-spent">–</b>gastado</div>
+        <div><b id="cu-bal">–</b>saldo</div>
+      </div>
+      <div id="cu-items" class="cu-items"></div>
+      <p class="small" style="margin:12px 0 0">Si al final sobra algo, se entregará a Tierra. 💛 <span id="cu-upd"></span></p>
+    </div>
+    <div class="card" id="cu-tk-card" style="margin-top:16px" hidden>
+      <h3>🧾 Tickets</h3>
+      <div id="cu-tk" class="cu-tk"></div>
     </div>
   </section>
 
@@ -1136,7 +1166,7 @@ footer .heart{font-family:"Grandstander";font-size:1.6rem;color:var(--marigold);
   const TYPES=[['normal','🌭','Normal'],['normal_sg','🌭🚫','Normal, pan sin gluten'],['veg','🌱','Vegetariano / vegano'],['veg_sg','🌱🚫','Vegetariano / vegano, pan sin gluten']];
   const SHORT={normal:'Normal',normal_sg:'Normal sin gluten',veg:'Vegetariano',veg_sg:'Vegetariano sin gluten'};
   const COMS={paseo:'Paseo por el bosque',disco:'Discomóvil',cena:'Cena',altar:'Altar de muertos',limpieza:'Recogida y limpieza'};
-  let entries=[], loaded=false, updatedAt=null, choriLocked=false;
+  let entries=[], loaded=false, updatedAt=null, choriLocked=false, cuentasPublic=false;
   let mine=new Set(); try{mine=new Set(JSON.parse(LS('h26-mine')||'[]'));}catch(e){}
   const saveMine=()=>LS('h26-mine',JSON.stringify([...mine]));
   const el=(tag,cls,txt)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e;};
@@ -1164,13 +1194,13 @@ footer .heart{font-family:"Grandstander";font-size:1.6rem;color:var(--marigold);
   async function load(silent){
     try{
       const r=await fetch(API+'/data',{cache:'no-store'}); if(!r.ok) throw 0;
-      const d=await r.json(); entries=d.entries||[]; updatedAt=d.updated_at; choriLocked=!!d.chori_locked; loaded=true;
+      const d=await r.json(); entries=d.entries||[]; updatedAt=d.updated_at; choriLocked=!!d.chori_locked; cuentasPublic=!!d.cuentas_public; loaded=true;
       document.body.classList.remove('db-off'); renderAll();
     }catch(e){ if(!loaded){document.body.classList.add('db-off');} }
   }
 
   // ---------- render ----------
-  function renderAll(){renderAsis();renderChori();renderPue();renderCom();renderAlerg();renderUpdated();maybeBanner();maybePue();}
+  function renderAll(){renderAsis();renderChori();renderPue();renderCuentasPub();renderCom();renderAlerg();renderUpdated();maybeBanner();maybePue();}
   const ALG=[[/gluten|trigo|cebada|centeno|avena|celiac|celíac/i,'🌾'],[/lact|leche|láct|lact|queso|mantequilla|caseína|proteína de vaca|aplv/i,'🥛'],[/huevo/i,'🥚'],
     [/cacahuete|man[ií]|frutos? secos?|nuez|nueces|almendra|avellana|anacardo|pistacho|piñ[oó]n/i,'🥜'],[/soja/i,'🫘'],[/pescado/i,'🐟'],[/marisco|crust|gamba|molusc/i,'🦐'],
     [/s[eé]samo/i,'⚪'],[/fresa/i,'🍓'],[/kiwi/i,'🥝'],[/melocot|albaricoque|ciruela|cereza|rosácea/i,'🍑'],[/pl[aá]tano/i,'🍌'],[/tomate/i,'🍅'],[/legumbre|garbanzo|lenteja|guisante|altramuz/i,'🫛'],
@@ -1201,6 +1231,29 @@ footer .heart{font-family:"Grandstander";font-size:1.6rem;color:var(--marigold);
     const shown=list.filter(e=>!q||e.name.toLowerCase().includes(q));
     shown.forEach(e=>{const b=editBtn(e);b.append(el('span','row-name',e.name));if(mine.has(e.id))b.append(el('span','tag','vosotros'));b.append(el('span','row-edit','✏️'));box.append(b);});
     if(!shown.length) box.append(el('p','small',q?'Nadie coincide con «'+q+'». ¿Os apuntáis?':'Aún no hay nadie en la lista.'));
+  }
+  const CU_LBL={pan:'🥖 Pan',pan_sg:'🥖🚫 Pan sin gluten',chorizos:'🌭 Chorizos',chorizos_veg:'🌱 Chorizos vegetales',chorizos_veg_sg:'🌱🚫 Chorizos vegetales sin gluten',lena:'🪵 Leña',varias:'🧾 Varias'};
+  const eur2=x=>x.toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
+  async function renderCuentasPub(){
+    const sec=document.getElementById('cuentas'),nav=document.getElementById('nav-cuentas'); if(!sec) return;
+    if(!cuentasPublic){sec.hidden=true;nav.hidden=true;return;}
+    try{
+      const d=await (await fetch(API+'/public/cuentas',{cache:'no-store'})).json();
+      if(!d.public){sec.hidden=true;nav.hidden=true;return;}
+      const spent=Object.values(d.items).reduce((s,i)=>s+i.amount,0), bal=d.paid-spent;
+      document.getElementById('cu-paid').textContent=eur2(d.paid);document.getElementById('cu-due').textContent=eur2(d.total-d.paid);
+      document.getElementById('cu-spent').textContent=eur2(spent);document.getElementById('cu-bal').textContent=(bal<0?'−':'')+eur2(Math.abs(bal));
+      const box=document.getElementById('cu-items');box.innerHTML='';
+      Object.keys(CU_LBL).forEach(k=>{const i=d.items[k];if(!i||(!i.amount&&!i.notes))return;
+        const r=el('div','cu-it');r.append(el('span','cu-n',CU_LBL[k]),el('span','cu-a',eur2(i.amount)));if(i.notes)r.append(el('small',null,i.notes));box.append(r);});
+      if(!box.children.length) box.append(el('p','small','Aún no hay gastos apuntados.'));
+      document.getElementById('cu-upd').textContent=d.updated_at?'Actualizado: '+fmt(toDate(d.updated_at))+'.':'';
+      const tk=document.getElementById('cu-tk');tk.innerHTML='';
+      d.tickets.forEach(t=>{const a=el('a');a.href=API+'/public/tickets/'+t.id+'/img';a.target='_blank';a.rel='noopener';
+        const im=el('img');im.loading='lazy';im.alt='Ticket de '+(CU_LBL[t.concept]||t.concept);im.src=a.href;a.append(im,el('span',null,CU_LBL[t.concept]||t.concept));tk.append(a);});
+      document.getElementById('cu-tk-card').hidden=!d.tickets.length;
+      sec.hidden=false;nav.hidden=false;
+    }catch(e){}
   }
   function renderPue(){
     const box=document.getElementById('pue-list'); if(!box) return;

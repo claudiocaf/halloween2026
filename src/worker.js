@@ -61,6 +61,8 @@ async function ensureSchema(env) {
   await env.DB.prepare('CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT)').run();
   await env.DB.prepare("CREATE TABLE IF NOT EXISTS tickets (id INTEGER PRIMARY KEY AUTOINCREMENT, concept TEXT NOT NULL, name TEXT NOT NULL DEFAULT '', mime TEXT NOT NULL, data TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT (datetime('now')))").run();
   await env.DB.prepare("UPDATE tickets SET concept = 'chorizos_veg_sg' WHERE concept = 'chorizos_sg'").run();
+  const tcols = (await env.DB.prepare('PRAGMA table_info(tickets)').all()).results.map(c => c.name);
+  if (!tcols.includes('visible')) await env.DB.prepare('ALTER TABLE tickets ADD COLUMN visible INTEGER NOT NULL DEFAULT 0').run();
   schemaReady = true;
 }
 async function getSetting(env, key) {
@@ -140,7 +142,28 @@ async function handleApi(request, env, url) {
     const { results } = await env.DB.prepare('SELECT * FROM entries ORDER BY list, id').all();
     const last = await env.DB.prepare('SELECT MAX(at) AS at FROM log').first();
     const choriLocked = (await getSetting(env, 'chori_locked')) === '1';
-    return json({ entries: results.map(rowOut), updated_at: last?.at || null, needs_code: !!env.EDIT_CODE, chori_locked: choriLocked });
+    const cuentasPublic = (await getSetting(env, 'cuentas_public')) === '1';
+    return json({ entries: results.map(rowOut), updated_at: last?.at || null, needs_code: !!env.EDIT_CODE, chori_locked: choriLocked, cuentas_public: cuentasPublic });
+  }
+
+  // ---- Cuentas para las familias: solo si el admin las ha hecho visibles; solo totales, notas y fotos marcadas ----
+  if (method === 'GET' && path === '/api/public/cuentas') {
+    if ((await getSetting(env, 'cuentas_public')) !== '1') return json({ public: false });
+    const c = await getCuentas(env);
+    const { results: es } = await env.DB.prepare("SELECT * FROM entries WHERE list = 'choripan'").all();
+    const eur = (r, pre = '') => QTY.reduce((s, k) => s + (r[pre + k] || 0) * PRICES[k], 0);
+    const total = es.reduce((s, r) => s + eur(r), 0), paid = es.reduce((s, r) => s + eur(r, 'paid_'), 0);
+    const { results: ts } = await env.DB.prepare('SELECT id, concept, created_at FROM tickets WHERE visible = 1 ORDER BY id').all();
+    return json({ public: true, items: c.items, updated_at: c.updated_at, total, paid, tickets: ts });
+  }
+  const pImg = path.match(/^\/api\/public\/tickets\/(\d+)\/img$/);
+  if (method === 'GET' && pImg) {
+    if ((await getSetting(env, 'cuentas_public')) !== '1') return bad('No disponible.', 404);
+    const t = await env.DB.prepare('SELECT mime, data FROM tickets WHERE id = ? AND visible = 1').bind(Number(pImg[1])).first();
+    if (!t) return bad('Foto no encontrada.', 404);
+    const bin = atob(t.data), bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return new Response(bytes, { headers: { 'content-type': t.mime, 'cache-control': 'public, max-age=60' } });
   }
 
   // ---- Zona admin (historial, descarga, deshacer) ----
@@ -150,7 +173,7 @@ async function handleApi(request, env, url) {
   if (method === 'GET' && path === '/api/admin') return json({ ok: true, has_key: !!env.ADMIN_KEY });
   if (method === 'GET' && path === '/api/cuentas') return json(await getCuentas(env));
   if (method === 'GET' && path === '/api/tickets') {
-    const { results } = await env.DB.prepare('SELECT id, concept, name, mime, length(data) AS size, created_at FROM tickets ORDER BY id').all();
+    const { results } = await env.DB.prepare('SELECT id, concept, name, mime, visible, length(data) AS size, created_at FROM tickets ORDER BY id').all();
     return json({ tickets: results });
   }
   const tImg = path.match(/^\/api\/tickets\/(\d+)\/img$/);
@@ -185,6 +208,21 @@ async function handleApi(request, env, url) {
         .bind(concept, cleanName(b.name).slice(0, 80), m[1], m[2]).first();
       await log(env, 'ticket_add', 'cuentas', t.id, CUENTAS_LBL[concept], null, { concept });
       return json({ ok: true, ticket: t }, 201);
+    }
+    if (path === '/api/admin/cuentas-public') {
+      const v = b.public ? '1' : '0';
+      await setSetting(env, 'cuentas_public', v);
+      await log(env, v === '1' ? 'cuentas_show' : 'cuentas_hide', 'cuentas', null, v === '1' ? 'Cuentas visibles para las familias' : 'Cuentas ocultas para las familias', null, null);
+      return json({ ok: true, cuentas_public: v === '1' });
+    }
+    const tVis = path.match(/^\/api\/admin\/tickets\/(\d+)\/visible$/);
+    if (tVis) {
+      const t = await env.DB.prepare('SELECT id, concept FROM tickets WHERE id = ?').bind(Number(tVis[1])).first();
+      if (!t) return bad('Foto no encontrada.', 404);
+      const v = b.visible ? 1 : 0;
+      await env.DB.prepare('UPDATE tickets SET visible = ? WHERE id = ?').bind(v, t.id).run();
+      await log(env, v ? 'ticket_show' : 'ticket_hide', 'cuentas', t.id, CUENTAS_LBL[t.concept], null, null);
+      return json({ ok: true, visible: v });
     }
     const tDel = path.match(/^\/api\/admin\/tickets\/(\d+)\/delete$/);
     if (tDel) {
