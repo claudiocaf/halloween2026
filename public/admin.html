@@ -84,6 +84,17 @@ html{scroll-behavior:smooth}
 .wlist li.info{background:#eef5ff;color:#1d3f66}
 .fam-name small{display:block;color:var(--muted);font-size:.78rem}
 
+.cu-grid{display:grid;grid-template-columns:minmax(120px,1fr) 130px minmax(160px,2fr);gap:8px 10px;align-items:center}
+.cu-grid .cu-hd{font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;font-weight:800}
+.cu-grid .cu-l{font-weight:800}
+.cu-grid input[type=text]{width:100%;min-width:0;border:2px solid var(--line);border-radius:12px;padding:9px 12px;background:#fff;color:var(--ink);font:600 .95rem system-ui,sans-serif}
+.cu-grid input[type=text]:focus{outline:none;border-color:var(--orange)}
+.cu-grid .sim-in{padding:0 10px}
+.cu-grid .sim-in input[type=text]{border:0;border-radius:0;padding:9px 0;background:transparent;font-weight:800}
+.cu-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:14px}
+.cu-msg{font-weight:800;font-size:.9rem}
+.a-cuentas{color:#2d6fb3;font-weight:800}
+@media (max-width:640px){.cu-grid{grid-template-columns:1fr 120px}.cu-grid .cu-hd.nt{display:none}.cu-grid .cu-note{grid-column:1/-1;margin-bottom:6px}}
 .sim-h{font-size:1rem;margin:16px 0 6px}
 .sim-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:6px 0}
 .sim-row b{font-size:1.05rem}
@@ -136,9 +147,24 @@ html{scroll-behavior:smooth}
     <p class="muted" style="margin:10px 0 0;font-size:.85rem">El margen disponible tiene que cubrir también salsas, condimentos y otros gastos.</p>
   </div>
 
+  <div class="card" id="cuentas">
+    <h2>🧾 Cuentas reales</h2>
+    <p class="muted" style="margin:0;font-size:.85rem">Lo que se ha cobrado por los choripanes y lo que se ha pagado de verdad. Los gastos se guardan en el servidor y quedan anotados en «Últimos cambios».</p>
+    <h3 class="sim-h">Ingresos (choripanes)</h3>
+    <div class="sim-sum" id="cu-inc" style="margin-top:0"></div>
+    <h3 class="sim-h">Gastos reales</h3>
+    <div class="cu-grid" id="cu-grid"></div>
+    <div class="cu-bar">
+      <button type="button" class="btn" id="cu-save">💾 Guardar cuentas</button>
+      <span class="cu-msg muted" id="cu-msg"></span>
+    </div>
+    <div class="sim-sum" id="cu-sum"></div>
+  </div>
+
   <nav class="qnav" id="qnav" aria-label="Secciones">
     <a href="#compra">🛒 Compra</a>
     <a href="#simulador">🧮 Simulador</a>
+    <a href="#cuentas">🧾 Cuentas</a>
     <a href="#paycard">💶 Pagos</a>
     <a href="#familias">👥 Familias</a>
     <a href="#avisos">🔍 Avisos <span class="qb" id="qb-warn"></span></a>
@@ -187,7 +213,7 @@ html{scroll-behavior:smooth}
   const LS=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v);}catch(e){return null;}};
   const LISTS={asistentes:'✅ Asistentes',choripan:'🌭 Choripán',puestos:'🏠 Puestos',paseo:'🌳 Paseo',disco:'🪩 Disco',cena:'🍽️ Cena',altar:'🕯️ Altar',limpieza:'🧹 Limpieza',alergias:'⚠️ Alergias'};
   const TYPES=[['normal','🌭',3],['normal_sg','🌭🚫',4],['veg','🌱',4],['veg_sg','🌱🚫',4]];
-  const VERB={add:'añadió',edit:'cambió',delete:'quitó',restore:'recuperó',pay:'💶 marcó pagado',unpay:'anuló el pago de',lock:'🔒 bloqueó',unlock:'🔓 desbloqueó',lock_all:'🔒',unlock_all:'🔓'};
+  const VERB={add:'añadió',edit:'cambió',delete:'quitó',restore:'recuperó',pay:'💶 marcó pagado',unpay:'anuló el pago de',lock:'🔒 bloqueó',unlock:'🔓 desbloqueó',lock_all:'🔒',unlock_all:'🔓',cuentas:'🧾 actualizó'};
   let entries=[], tab='asistentes';
   const el=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e;};
   const fmt=s=>s?new Date(s.replace(' ','T')+'Z').toLocaleString('es-ES',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',timeZone:'Europe/Madrid'}):'';
@@ -266,6 +292,64 @@ html{scroll-behavior:smooth}
     row('tot','Margen disponible',(mg>=0?'+':'−')+eu(Math.abs(mg)),mg>=0?'pos':'neg');
   }
   simInit();
+
+  // ---------- cuentas reales ----------
+  const CU=[['pan','🥖 Pan'],['pan_sg','🥖🚫 Pan sin gluten'],['chorizos','🌭 Chorizos'],['chorizos_sg','🌭🚫 Chorizos sin gluten'],['lena','🪵 Leña'],['varias','🧾 Varias']];
+  let cuSaved=null, cuWork=null, cuInit=false;
+  const cuNum=v=>{const x=parseFloat(String(v).replace(',','.'));return isFinite(x)&&x>0?Math.round(x*100)/100:0;};
+  const cuStr=o=>JSON.stringify(CU.map(([k])=>[cuNum(o[k].amount),(o[k].notes||'').trim()]));
+  const cuDirty=()=>!!cuSaved&&cuStr(cuSaved)!==cuStr(cuWork);
+  function cuInputs(){
+    const g=document.getElementById('cu-grid');g.innerHTML='';
+    g.append(el('span','cu-hd','Concepto'),el('span','cu-hd','Pagado (€)'),el('span','cu-hd nt','Notas'));
+    CU.forEach(([k,t])=>{
+      const a=el('input'),w=el('span','sim-in'),n=el('input','cu-note');
+      a.type='text';a.inputMode='decimal';a.value=cuWork[k].amount?String(cuWork[k].amount).replace('.',','):'';a.placeholder='0';a.setAttribute('aria-label','Importe '+t);
+      n.type='text';n.maxLength=300;n.value=cuWork[k].notes;n.placeholder='Nota (tienda, ticket, quién pagó…)';n.setAttribute('aria-label','Notas '+t);
+      a.oninput=()=>{cuWork[k].amount=cuNum(a.value);cuCalc();};
+      n.oninput=()=>{cuWork[k].notes=n.value;cuCalc();};
+      w.append(a,el('span',null,'€'));g.append(el('span','cu-l',t),w,n);
+    });
+  }
+  function cuCalc(){
+    const ch=entries.filter(e=>e.list==='choripan');
+    const tot=ch.reduce((s,e)=>s+eurOf(e),0), paid=ch.reduce((s,e)=>s+eurOf(e,'paid_'),0), due=tot-paid;
+    const fams=ch.filter(e=>{const st=payState(e);return st==='none'||st==='part';}).length;
+    const inc=document.getElementById('cu-inc');inc.innerHTML='';
+    const row=(box,cls,a,b,bc)=>{const r=el('div','r'+(cls?' '+cls:''));r.append(el('span',null,a),el('span',bc||null,b));box.append(r);};
+    row(inc,'','Total de los pedidos',eu(tot));
+    row(inc,'','Cobrado hasta ahora',eu(paid),'pos');
+    row(inc,'','Falta por cobrar'+(fams?' ('+fams+(fams===1?' familia)':' familias)'):''),eu(due),due>0?'neg':null);
+    const spent=CU.reduce((s,[k])=>s+cuNum(cuWork[k].amount),0);
+    const sum=document.getElementById('cu-sum');sum.innerHTML='';
+    row(sum,'','Gastado en total',eu(spent));
+    row(sum,'','Cobrado',eu(paid));
+    const real=paid-spent, all=tot-spent;
+    row(sum,'tot','Saldo real ahora',(real>=0?'+':'−')+eu(Math.abs(real)),real>=0?'pos':'neg');
+    row(sum,'sm','Si se cobra todo lo que falta',(all>=0?'+':'−')+eu(Math.abs(all)),all>=0?'pos':'neg');
+    const m=document.getElementById('cu-msg');
+    if(cuDirty()){m.textContent='Cambios sin guardar';m.className='cu-msg neg';}
+    else if(m.dataset.ok){m.textContent=m.dataset.ok;m.className='cu-msg pos';}
+    else{m.textContent=cuSaved&&cuSaved._at?'Última vez guardado: '+fmt(cuSaved._at):'';m.className='cu-msg muted';}
+  }
+  function renderCuentas(d){
+    if(d){
+      const items={};CU.forEach(([k])=>items[k]={amount:d.items[k].amount,notes:d.items[k].notes});
+      const clean=!cuDirty();
+      cuSaved=JSON.parse(JSON.stringify(items));cuSaved._at=d.updated_at;
+      if(clean||!cuWork){cuWork=JSON.parse(JSON.stringify(items));cuInputs();}
+    }
+    if(cuWork)cuCalc();
+  }
+  document.getElementById('cu-save').onclick=async()=>{
+    const b=document.getElementById('cu-save'),m=document.getElementById('cu-msg');b.disabled=true;
+    try{
+      const d=await api('/admin/cuentas',{method:'POST',body:JSON.stringify({items:Object.fromEntries(CU.map(([k])=>[k,{amount:cuNum(cuWork[k].amount),notes:(cuWork[k].notes||'').trim()}]))})});
+      cuSaved=JSON.parse(JSON.stringify(cuWork));cuSaved._at=d.updated_at;
+      m.dataset.ok='✓ Guardado';cuCalc();setTimeout(()=>{delete m.dataset.ok;cuCalc();},3000);
+      await loadLog();
+    }catch(e){alert(e.message);}finally{b.disabled=false;}
+  };
 
   function tabs(){
     const b=document.getElementById('tabs');b.innerHTML='';
@@ -439,7 +523,11 @@ html{scroll-behavior:smooth}
     const ul=document.getElementById('log');
     const d=await api('/log?limit=200');ul.innerHTML='';
     d.log.forEach(l=>{
-      const li=el('li');li.append(el('span','t',fmt(l.at)+' · '),el('span','a-'+l.action,VERB[l.action]||l.action),document.createTextNode(' '),el('b',null,l.name||''),el('span','muted',' · '+(LISTS[l.list]||l.list)));
+      const li=el('li');li.append(el('span','t',fmt(l.at)+' · '),el('span','a-'+l.action,VERB[l.action]||l.action),document.createTextNode(' '),el('b',null,l.name||''),el('span','muted',l.list==='cuentas'?'':' · '+(LISTS[l.list]||l.list)));
+      if(l.action==='cuentas'&&l.before&&l.after){
+        const ch=CU.filter(([k])=>l.before[k]&&l.after[k]&&(l.before[k].amount!==l.after[k].amount||(l.before[k].notes||'')!==(l.after[k].notes||''))).map(([k,t])=>t+' '+eu(l.before[k].amount)+' → '+eu(l.after[k].amount)+(l.after[k].notes?' («'+l.after[k].notes+'»)':''));
+        if(ch.length)li.append(el('span','muted',' ('+ch.join(' · ')+')'));
+      }
       if(l.action==='edit'&&l.before&&l.after){
         const ch=[];if(l.before.name!==l.after.name)ch.push('«'+l.before.name+'» → «'+l.after.name+'»');
         if((l.before.detail||'')!==(l.after.detail||''))ch.push('«'+(l.before.detail||'—')+'» → «'+(l.after.detail||'—')+'»');
@@ -457,7 +545,8 @@ html{scroll-behavior:smooth}
     try{
       const ad=await api('/admin');hasKey=ad.has_key!==false;
       const d=await api('/data');entries=d.entries||[];choriLocked=!!d.chori_locked;
-      kpis();compra();simCalc();renderPay();renderFam();tabs();table();await loadLog();
+      let cu=null;try{cu=await api('/cuentas');}catch(e){}
+      kpis();compra();simCalc();renderCuentas(cu);renderPay();renderFam();tabs();table();await loadLog();
       document.getElementById('csv').href='/api/export.csv'+(key()?'?key='+encodeURIComponent(key()):'');
     }catch(e){showErr(e.message);}
   }

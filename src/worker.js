@@ -10,6 +10,9 @@ const LISTS = ['asistentes', 'choripan', 'puestos', 'paseo', 'disco', 'cena', 'a
 const QTY = ['normal', 'normal_sg', 'veg', 'veg_sg'];
 const MAX_NAME = 160;
 const MAX_QTY = 40;
+// Cuentas reales de la fiesta (solo admin): lo que se ha pagado de verdad por cada concepto
+const CUENTAS = ['pan', 'pan_sg', 'chorizos', 'chorizos_sg', 'lena', 'varias'];
+const MAX_NOTE = 300;
 
 const json = (data, status = 200) =>
   new Response(JSON.stringify(data), {
@@ -62,6 +65,28 @@ async function setSetting(env, key, value) {
   await env.DB.prepare('INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value').bind(key, value).run();
 }
 
+async function getCuentas(env) {
+  let raw = {};
+  try { raw = JSON.parse((await getSetting(env, 'cuentas')) || '{}'); } catch { raw = {}; }
+  const items = {};
+  for (const k of CUENTAS) {
+    const it = (raw.items && raw.items[k]) || {};
+    items[k] = { amount: Number.isFinite(+it.amount) ? +it.amount : 0, notes: typeof it.notes === 'string' ? it.notes : '' };
+  }
+  return { items, updated_at: raw.updated_at || null };
+}
+function cleanCuentas(b) {
+  const items = {};
+  for (const k of CUENTAS) {
+    const it = (b && b.items && b.items[k]) || {};
+    const n = Number(it.amount);
+    const amount = Number.isFinite(n) && n > 0 ? Math.min(Math.round(n * 100) / 100, 100000) : 0;
+    const notes = typeof it.notes === 'string' ? it.notes.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, ' ').trim().slice(0, MAX_NOTE) : '';
+    items[k] = { amount, notes };
+  }
+  return items;
+}
+
 async function readBody(request) {
   try { return await request.json(); } catch { return null; }
 }
@@ -108,10 +133,11 @@ async function handleApi(request, env, url) {
   }
 
   // ---- Zona admin (historial, descarga, deshacer) ----
-  if (path === '/api/log' || path === '/api/export.csv' || /^\/api\/log\/\d+\/restore$/.test(path) || path === '/api/admin' || path.startsWith('/api/admin/')) {
+  if (path === '/api/log' || path === '/api/cuentas' || path === '/api/export.csv' || /^\/api\/log\/\d+\/restore$/.test(path) || path === '/api/admin' || path.startsWith('/api/admin/')) {
     if (!isAdmin(request, env, url)) return bad('Clave de administración incorrecta.', 403, { need_admin: true });
   }
   if (method === 'GET' && path === '/api/admin') return json({ ok: true, has_key: !!env.ADMIN_KEY });
+  if (method === 'GET' && path === '/api/cuentas') return json(await getCuentas(env));
 
   // ---- Pagos y bloqueo de choripán (solo con ADMIN_KEY configurada) ----
   if (path.startsWith('/api/admin/')) {
@@ -123,6 +149,14 @@ async function handleApi(request, env, url) {
       await setSetting(env, 'chori_locked', v);
       await log(env, v === '1' ? 'lock_all' : 'unlock_all', 'choripan', null, v === '1' ? 'Pedidos de choripán cerrados' : 'Pedidos de choripán abiertos', null, null);
       return json({ ok: true, chori_locked: v === '1' });
+    }
+    if (path === '/api/admin/cuentas') {
+      const before = await getCuentas(env);
+      const items = cleanCuentas(b);
+      const at = new Date().toISOString().slice(0, 19).replace('T', ' ');
+      await setSetting(env, 'cuentas', JSON.stringify({ items, updated_at: at }));
+      await log(env, 'cuentas', 'cuentas', null, 'las cuentas', before.items, items);
+      return json({ ok: true, items, updated_at: at });
     }
     const a = path.match(/^\/api\/admin\/entries\/(\d+)\/(pay|unpay|lock|unlock)$/);
     if (a) {
