@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Tickets de choripán · Halloween 2026</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎟️</text></svg>">
+<style>
+:root{--night:#1e0f36;--cream:#fff6e8;--ink:#2b1a3f;--muted:#6b5a80;--orange:#ff8a1f;--line:rgba(43,26,63,.18)}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI","Segoe UI Emoji",sans-serif;background:var(--night);color:var(--cream);line-height:1.4}
+.wrap{max-width:900px;margin:0 auto;padding:20px 16px 50px}
+h1{margin:0 0 4px;font-size:clamp(1.4rem,5vw,2rem)}
+.sub{margin:0 0 16px;color:rgba(255,246,232,.75)}
+.bar{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px}
+.btn{display:inline-flex;align-items:center;gap:6px;border:0;border-radius:999px;padding:10px 16px;font-weight:800;font-size:.95rem;cursor:pointer;background:var(--orange);color:var(--night);text-decoration:none;font-family:inherit}
+.btn.ghost{background:transparent;color:var(--cream);border:2px solid rgba(255,246,232,.6)}
+.tip{background:rgba(255,246,232,.08);border-radius:14px;padding:10px 14px;margin-bottom:16px;font-size:.9rem}
+.err{background:#ffe1e1;color:#8a1c1c;font-weight:800;padding:10px 14px;border-radius:12px;margin-bottom:14px}
+.sheet{background:#fff;color:var(--ink);border-radius:14px;padding:18px;margin-bottom:18px}
+.sheet h2{margin:0 0 4px;font-size:1.25rem}
+.sheet .note{margin:0 0 12px;color:var(--muted);font-size:.88rem}
+table{width:100%;border-collapse:collapse;font-size:.95rem}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+td.n,th.n{text-align:center;white-space:nowrap}
+td.n b{font-size:1.05rem}
+tfoot td{font-weight:900;border-top:2px solid var(--ink);border-bottom:0}
+tfoot{display:table-row-group}
+tr{break-inside:avoid;page-break-inside:avoid}
+.pg-ok{color:#1f7a3a;font-weight:800}.pg-part{color:#8a5a00;font-weight:800}.pg-no{color:#b3261e;font-weight:800}
+
+/* ---- tickets ---- */
+.tickets{display:grid;grid-template-columns:repeat(2,98mm);gap:0;justify-content:center}
+.tk{width:98mm;height:44mm;border:1px dashed #777;display:grid;grid-template-columns:20mm 1fr;overflow:hidden;background:#fff;color:#000;break-inside:avoid;page-break-inside:avoid}
+.band{display:grid;place-items:center;font-size:11mm;-webkit-print-color-adjust:exact;print-color-adjust:exact;border-right:1px dashed #777}
+.t-normal .band{background:#ffd9a8}.t-normal_sg .band{background:#bfe0ff}.t-veg .band{background:#c9f0c0}.t-veg_sg .band{background:#e2cdf7}
+.body{padding:3mm 4mm;display:flex;flex-direction:column;min-width:0}
+.ttl{font-size:2.8mm;letter-spacing:.35mm;font-weight:800;color:#555}
+.typ{font-size:5.6mm;font-weight:900;line-height:1.1;margin:1mm 0}
+.fam{font-size:3.6mm;font-weight:700;line-height:1.2;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.meta{margin-top:auto;display:flex;justify-content:space-between;gap:2mm;font-size:2.8mm;color:#444}
+.meta b{color:#000}
+.hide{display:none!important}
+
+@page{size:A4;margin:8mm}
+@media print{
+  body{background:#fff;color:#000}
+  .wrap{max-width:none;padding:0}
+  .noprint{display:none!important}
+  .sheet{border-radius:0;padding:0;margin:0}
+  #listSheet{page-break-after:always}
+  .tickets{gap:0}
+  th,td{font-size:10pt}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="noprint">
+    <h1>🎟️ Tickets de choripán</h1>
+    <p class="sub">Un ticket por cada choripán pedido, agrupados por familia. Se entregan a quien ha pedido y se presentan al recoger el choripán.</p>
+    <div id="err" class="err" hidden></div>
+    <div class="bar">
+      <button type="button" class="btn" data-print="all">🖨️ Imprimir todo / Guardar PDF</button>
+      <button type="button" class="btn ghost" data-print="tickets">Solo tickets</button>
+      <button type="button" class="btn ghost" data-print="list">Solo lista por familia</button>
+      <a class="btn ghost" href="/admin.html">← Admin</a>
+    </div>
+    <div class="tip">💡 En el cuadro de impresión elige <b>«Guardar como PDF»</b> (o tu impresora), tamaño <b>A4</b>, márgenes <b>predeterminados</b> y activa <b>«Gráficos de fondo»</b> para que se vean los colores. Los tickets salen en 2 columnas × 6 filas, con borde discontinuo para recortar.</div>
+  </div>
+
+  <section class="sheet" id="listSheet">
+    <h2>📋 Lista por familia</h2>
+    <p class="note" id="listNote"></p>
+    <table id="list"></table>
+  </section>
+
+  <section class="tickets" id="tickets" aria-label="Tickets"></section>
+</div>
+<script>
+(function(){
+  const TYPES=[['normal','🌭','Normal'],['normal_sg','🌭🚫','Normal sin gluten'],['veg','🌱','Vegetariano'],['veg_sg','🌱🚫','Vegetariano sin gluten']];
+  const el=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e;};
+  const pad=(n,w)=>String(n).padStart(w,'0');
+  async function init(){
+    let d;
+    try{const r=await fetch('/api/data',{cache:'no-store'});if(!r.ok)throw 0;d=await r.json();}
+    catch(e){const b=document.getElementById('err');b.textContent='No se han podido cargar los pedidos. Inténtalo de nuevo.';b.hidden=false;return;}
+    const fams=d.entries.filter(e=>e.list==='choripan'&&TYPES.some(([k])=>e[k]>0))
+      .sort((a,b)=>a.name.localeCompare(b.name,'es',{sensitivity:'base'}));
+    const qty=e=>TYPES.reduce((s,[k])=>s+e[k],0), paidQty=e=>TYPES.reduce((s,[k])=>s+Math.min(e[k],e['paid_'+k]||0),0);
+    const total=fams.reduce((s,e)=>s+qty(e),0);
+    // lista
+    const t=document.getElementById('list'),h=el('tr');
+    ['Familia',...TYPES.map(([,ic])=>ic),'Tickets','Pago'].forEach((x,i)=>h.append(el('th',i>0&&i<6?'n':null,x)));
+    const th=el('thead');th.append(h);t.append(th);const tb=el('tbody');
+    fams.forEach(e=>{
+      const r=el('tr');r.append(el('td',null,e.name));
+      TYPES.forEach(([k])=>{const c=el('td','n');if(e[k])c.append(el('b',null,String(e[k])));else c.textContent='·';r.append(c);});
+      r.append(el('td','n',String(qty(e))));
+      const p=paidQty(e),q=qty(e),c=el('td',p>=q?'pg-ok':p>0?'pg-part':'pg-no',p>=q?'✓ Pagado':p>0?'Parcial '+p+'/'+q:'Pendiente');
+      r.append(c);tb.append(r);
+    });
+    t.append(tb);
+    const tf=el('tfoot'),fr=el('tr');fr.append(el('td',null,'Total · '+fams.length+' familias'));
+    TYPES.forEach(([k])=>fr.append(el('td','n',String(fams.reduce((s,e)=>s+e[k],0)))));
+    fr.append(el('td','n',String(total)),el('td'));tf.append(fr);t.append(tf);
+    document.getElementById('listNote').textContent=total+' tickets en total · '+fams.length+' familias · '+TYPES.map(([k,ic])=>ic+' '+fams.reduce((s,e)=>s+e[k],0)).join('  ');
+    // tickets
+    const box=document.getElementById('tickets');let n=0;
+    fams.forEach(e=>{
+      const q=qty(e);let i=0;
+      TYPES.forEach(([k,ic,name])=>{
+        for(let j=0;j<e[k];j++){
+          n++;i++;
+          const tk=el('div','tk t-'+k),band=el('div','band',ic),b=el('div','body');
+          const tt=el('div','typ',name);
+          b.append(el('div','ttl','TICKET DE CHORIPÁN · 1 UNIDAD'),tt,el('div','fam',e.name));
+          const m=el('div','meta'),l=el('span');l.append(document.createTextNode('Ticket '),el('b',null,i+' de '+q));
+          m.append(l,el('span',null,'Nº '+pad(n,3)+' · Halloween 2026'));
+          b.append(m);tk.append(band,b);box.append(tk);
+        }
+      });
+    });
+    document.title='Tickets de choripán · '+total+' tickets';
+    const only=new URLSearchParams(location.search).get('only');
+    document.getElementById('listSheet').classList.toggle('hide',only==='tickets');
+    document.getElementById('tickets').classList.toggle('hide',only==='list');
+  }
+  document.querySelectorAll('[data-print]').forEach(b=>b.onclick=()=>{
+    const m=b.dataset.print;
+    document.getElementById('listSheet').classList.toggle('hide',m==='tickets');
+    document.getElementById('tickets').classList.toggle('hide',m==='list');
+    window.print();
+    document.getElementById('listSheet').classList.remove('hide');document.getElementById('tickets').classList.remove('hide');
+  });
+  init();
+})();
+</script>
+</body>
+</html>
