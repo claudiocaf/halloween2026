@@ -582,7 +582,8 @@ footer .heart{font-family:"Grandstander";font-size:1.6rem;color:var(--marigold);
       <p>La fiesta la hicisteis <b>vosotras</b>. Cada disfraz, cada puesto montado con cariño, cada choripán servido, cada mano que ayudó a preparar, a recoger y a que todo saliera bien… <b>eso</b> fue la fiesta. 🎃</p>
       <p>Nosotras solo juntamos las ideas en una web; la magia la pusisteis vosotras, las familias, y los peques con sus risas, sus disfraces y sus ganas de pasarlo bien. Gracias por vuestra paciencia con las listas y los tickets, por vuestra generosidad y por demostrar que, cuando nos juntamos, la fiesta sale preciosa. 🧡</p>
       <p>Y gracias a <b>Tierra de Niños y Niñas</b> por abrirnos sus puertas. 💜</p>
-      <p>Como la transparencia también es una forma de cariño, aquí abajo tenéis las <b>cuentas claras</b>: lo que se recaudó, lo que se gastó y lo que dejamos en Tierra. 💛</p>
+      <p>Como la transparencia también es una forma de cariño, aquí abajo tenéis las <b>cuentas claras</b>: lo que se recaudó, lo que se gastó y lo que sobra, que <b>entregamos a Tierra</b>. 💛</p>
+      <p class="caja">Además, <b>la cajita de Tierra</b> sigue en la entrada del cole hasta el <b>lunes 2 de noviembre</b>. El martes la retiramos, así que quien quiera dejar algo para Tierra, como agradecimiento por habernos abierto sus puertas, tiene tiempo solo hasta ese día. 🧡</p>
       <p class="th-sign">¡Hasta la próxima, familias! 🥰👻🎃</p>
       <a class="th-go" href="#cuentas">Ver las cuentas 👇</a>
       <span id="fl" aria-hidden="true"></span>
@@ -606,7 +607,7 @@ footer .heart{font-family:"Grandstander";font-size:1.6rem;color:var(--marigold);
         <div><b id="cu-bal">–</b>saldo</div>
       </div>
       <div id="cu-items" class="cu-items"></div>
-      <p class="small" style="margin:12px 0 0">Lo que sobra se entrega a Tierra. 💛 <span id="cu-upd"></span></p>
+      <p class="small" style="margin:12px 0 0">Lo que sobra del choripán se entrega a Tierra. 💛 <span class="caja">La cajita para Tierra sigue en la entrada del cole hasta el lunes 2 de noviembre.</span> <span id="cu-upd"></span></p>
     </div>
     <div class="card" id="cu-tk-card" style="margin-top:16px" hidden>
       <h3>🧾 Tickets</h3>
@@ -780,6 +781,13 @@ footer .heart{font-family:"Grandstander";font-size:1.6rem;color:var(--marigold);
   }
   load();
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)load();});
+})();
+
+// La cajita de Tierra se retira el martes 3 de noviembre: a partir de entonces el texto cambia solo
+(function(){
+  if(Date.now()<new Date('2026-11-03T00:00:00+01:00').getTime())return;
+  document.querySelectorAll('p.caja').forEach(p=>{p.innerHTML='La <b>cajita de Tierra</b> ya se ha retirado. ¡Gracias a quien ha dejado algo para Tierra! 🧡';});
+  document.querySelectorAll('span.caja').forEach(sp=>{sp.textContent='La cajita para Tierra ya se ha retirado: ¡gracias a quien dejó algo!';});
 })();
 
 // Corazones que suben en el mensaje de gracias
